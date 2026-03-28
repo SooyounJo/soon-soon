@@ -9,6 +9,45 @@ const FlowriumMetallicTitle = dynamic(
 
 const GOO_SMOOTH = 0.14;
 
+/** 물방울 2개: 서로 다른 궤적·속도(사인 합성), 화면 안에 유지 */
+function presetDropletPositions() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const t = performance.now() * 0.001;
+  const mx = Math.min(w, h) * 0.08;
+
+  const x1 =
+    w * 0.24 +
+    w * 0.16 * Math.sin(t * 0.35) +
+    w * 0.07 * Math.sin(t * 1.05 + 1.1) +
+    w * 0.04 * Math.cos(t * 0.62 + 0.3);
+  const y1 =
+    h * 0.36 +
+    h * 0.12 * Math.cos(t * 0.4) +
+    h * 0.06 * Math.sin(t * 0.88 + 2) +
+    h * 0.05 * Math.cos(t * 1.2);
+
+  const x2 =
+    w * 0.76 +
+    w * 0.12 * Math.cos(t * 0.48 + 2.2) +
+    w * 0.06 * Math.sin(t * 1.35 + 0.4) +
+    w * 0.05 * Math.cos(t * 0.7);
+  const y2 =
+    h * 0.44 +
+    h * 0.14 * Math.sin(t * 0.46 + 1) +
+    h * 0.07 * Math.cos(t * 1.15 + 0.8) +
+    h * 0.05 * Math.sin(t * 0.55);
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  return {
+    x1: clamp(x1, mx, w - mx),
+    y1: clamp(y1, mx, h - mx),
+    x2: clamp(x2, mx, w - mx),
+    y2: clamp(y2, mx, h - mx),
+  };
+}
+
 export default function Home() {
   useEffect(() => {
     const root = document.documentElement;
@@ -20,19 +59,16 @@ export default function Home() {
     let cancelled = false;
 
     const applyLensVars = () => {
+      const { x1, y1, x2, y2 } = presetDropletPositions();
+      root.style.setProperty('--spot-pre-1-x', `${x1}px`);
+      root.style.setProperty('--spot-pre-1-y', `${y1}px`);
+      root.style.setProperty('--spot-pre-2-x', `${x2}px`);
+      root.style.setProperty('--spot-pre-2-y', `${y2}px`);
+
       root.style.setProperty('--dither-x', `${smoothX}px`);
       root.style.setProperty('--dither-y', `${smoothY}px`);
       root.style.setProperty('--spot-fast-x', `${targetX}px`);
       root.style.setProperty('--spot-fast-y', `${targetY}px`);
-
-      const midX = (smoothX + targetX) * 0.5;
-      const midY = (smoothY + targetY) * 0.5;
-      const dist = Math.hypot(targetX - smoothX, targetY - smoothY);
-      const minDim = Math.min(window.innerWidth, window.innerHeight);
-      const glassR = minDim * 0.17 + dist * 0.42;
-      root.style.setProperty('--glass-lens-x', `${midX}px`);
-      root.style.setProperty('--glass-lens-y', `${midY}px`);
-      root.style.setProperty('--glass-lens-r', `${Math.max(80, glassR)}px`);
     };
 
     const tick = () => {
