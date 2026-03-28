@@ -1,0 +1,325 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+/* Bagel Fat One: pages/index.js <Head> 에서 로드 (캔버스 텍스처와 동일 폰트) */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+html {
+  overflow-x: hidden;
+  /* 구이 렌즈: 작은 커서 점(--spot-fast) + 느리게 따라오는 꼬리(--dither) = 두 원 마스크 합성 */
+  --spot-r: min(20vmin, 26vw);
+  --spot-r-goo: min(28vmin, 34vw);
+  --spot-hard: 86%;
+  --spot-fa: 91%;
+  --spot-fb: 96%;
+  --spot-fast-x: 50vw;
+  --spot-fast-y: 50vh;
+  --glass-lens-x: 50vw;
+  --glass-lens-y: 50vh;
+  --glass-lens-r: min(32vmin, 40vw);
+}
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: #f4f4f2;
+  color: #111111;
+}
+
+/* 메인 워드마크와 동일 폰트 (HTML 사용 시) */
+.font-bagel {
+  font-family: 'Bagel Fat One', cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.blur-text-segment {
+  display: inline-block;
+  will-change: transform, filter, opacity;
+}
+
+.hero-blur-title {
+  margin: 0;
+  width: 100%;
+  justify-content: center;
+  font-size: clamp(3.25rem, 14vw, 8rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #0a0a0a;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* 메인 배경 maingra.png: 풀스크린, 좌우 꽉 참(cover) */
+.bg-flower {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #f4f4f2;
+  isolation: isolate;
+}
+
+.bg-flower-video {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* 블러 레이어: 질감 블러 + 약한 디채도(바깥은 잉크/종이 느낌) — 선명 구역은 위 레이어로 덮음 */
+.bg-flower-video-blur {
+  transform: scale(1.12);
+  transform-origin: center center;
+  filter: url(#flowrium-blur-soak) grayscale(0.88) contrast(1.1) brightness(0.98);
+  -webkit-filter: url(#flowrium-blur-soak) grayscale(0.88) contrast(1.1) brightness(0.98);
+}
+
+/* 블러·디더 위 배경만 리퀴드 글라스 느낌 — 커서 선명 원(마스크 안)에는 적용 안 함 */
+.bg-glass-field {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: saturate(1.3) brightness(1.05);
+  -webkit-backdrop-filter: saturate(1.3) brightness(1.05);
+  box-shadow: inset 0 0 70px rgba(255, 255, 255, 0.07);
+}
+
+/* 중심 투명 → 바깥만 글라스 — JS가 두 블롭을 덮는 단일 원(--glass-lens-*)으로 근사 */
+.bg-glass-outer-masked {
+  mask-image: radial-gradient(
+    circle var(--glass-lens-r) at var(--glass-lens-x, 50vw) var(--glass-lens-y, 50vh),
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) var(--spot-hard),
+    rgba(255, 255, 255, 0.4) var(--spot-fa),
+    rgba(255, 255, 255, 0.9) var(--spot-fb),
+    #fff 100%
+  );
+  -webkit-mask-image: radial-gradient(
+    circle var(--glass-lens-r) at var(--glass-lens-x, 50vw) var(--glass-lens-y, 50vh),
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) var(--spot-hard),
+    rgba(255, 255, 255, 0.4) var(--spot-fa),
+    rgba(255, 255, 255, 0.9) var(--spot-fb),
+    #fff 100%
+  );
+  mask-mode: alpha;
+}
+
+/* 선명 이미지: 커서(빠름) + 꼬리(느림) 두 원 마스크 합성 = 구이 메타볼 실루엣 */
+.bg-flower-video-sharp {
+  z-index: 5;
+  transform: scale(1.002);
+  transform-origin: center center;
+  mask-image:
+    radial-gradient(
+      circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
+      #fff 0%,
+      #fff var(--spot-hard),
+      rgba(255, 255, 255, 0.62) var(--spot-fa),
+      rgba(255, 255, 255, 0.18) var(--spot-fb),
+      rgba(255, 255, 255, 0) 100%
+    ),
+    radial-gradient(
+      circle var(--spot-r-goo) at var(--dither-x, 50vw) var(--dither-y, 50vh),
+      #fff 0%,
+      #fff var(--spot-hard),
+      rgba(255, 255, 255, 0.62) var(--spot-fa),
+      rgba(255, 255, 255, 0.18) var(--spot-fb),
+      rgba(255, 255, 255, 0) 100%
+    );
+  mask-composite: add;
+  -webkit-mask-image:
+    radial-gradient(
+      circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
+      #fff 0%,
+      #fff var(--spot-hard),
+      rgba(255, 255, 255, 0.62) var(--spot-fa),
+      rgba(255, 255, 255, 0.18) var(--spot-fb),
+      rgba(255, 255, 255, 0) 100%
+    ),
+    radial-gradient(
+      circle var(--spot-r-goo) at var(--dither-x, 50vw) var(--dither-y, 50vh),
+      #fff 0%,
+      #fff var(--spot-hard),
+      rgba(255, 255, 255, 0.62) var(--spot-fa),
+      rgba(255, 255, 255, 0.18) var(--spot-fb),
+      rgba(255, 255, 255, 0) 100%
+    );
+  -webkit-mask-composite: plus-lighter;
+  mask-mode: alpha;
+}
+
+/* 배경 미세 할프톤 — 스포트라이트 밖에서만 */
+.bg-dither {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(20, 20, 20, 0.16) 0.5px,
+    transparent 0.62px
+  );
+  background-size: 3px 3px;
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+/* 거친 스티플(참조 이미지의 질감/먼지 할프톤) — 블러 위·선명 레이어 아래 */
+.bg-halftone-coarse {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    rgba(0, 0, 0, 0.38) 0.85px,
+    transparent 1px
+  );
+  background-size: 5px 5px;
+  mix-blend-mode: multiply;
+  opacity: 0.72;
+}
+
+/* 선명 원과 동일 스톱 — 디더는 렌즈 밖에서만 (구이 이중 마스크) */
+.bg-dither-masked {
+  mask-image:
+    radial-gradient(
+      circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) var(--spot-hard),
+      rgba(255, 255, 255, 0.38) var(--spot-fa),
+      rgba(255, 255, 255, 0.88) var(--spot-fb),
+      #fff 100%
+    ),
+    radial-gradient(
+      circle var(--spot-r-goo) at var(--dither-x, 50vw) var(--dither-y, 50vh),
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) var(--spot-hard),
+      rgba(255, 255, 255, 0.38) var(--spot-fa),
+      rgba(255, 255, 255, 0.88) var(--spot-fb),
+      #fff 100%
+    );
+  mask-composite: add;
+  -webkit-mask-image:
+    radial-gradient(
+      circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) var(--spot-hard),
+      rgba(255, 255, 255, 0.38) var(--spot-fa),
+      rgba(255, 255, 255, 0.88) var(--spot-fb),
+      #fff 100%
+    ),
+    radial-gradient(
+      circle var(--spot-r-goo) at var(--dither-x, 50vw) var(--dither-y, 50vh),
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) var(--spot-hard),
+      rgba(255, 255, 255, 0.38) var(--spot-fa),
+      rgba(255, 255, 255, 0.88) var(--spot-fb),
+      #fff 100%
+    );
+  -webkit-mask-composite: plus-lighter;
+  mask-mode: alpha;
+}
+
+.title-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* react-bits MetallicPaint */
+.paint-container {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.metallic-title-inner {
+  position: relative;
+  width: min(98vw, 124200px);
+  height: min(88vh, 51300px);
+  max-height: 51300px;
+}
+
+.title-scatter-wrap {
+  overflow: hidden;
+}
+
+.metallic-layer {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  /* 부모는 pointer-events: none — 캔버스만 마우스를 받아 MetallicPaint 반응 */
+  pointer-events: auto;
+}
+
+/* 워드마크: 미세 + 거친 할프톤 — 선명 원 밖에서만(참조 타이포 질감) */
+.title-dither {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(35, 35, 35, 0.14) 0.5px,
+    transparent 0.62px
+  );
+  background-size: 3px 3px;
+  mix-blend-mode: multiply;
+  opacity: 0.32;
+}
+
+.title-halftone-coarse {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle at 2px 2px,
+    rgba(0, 0, 0, 0.32) 0.8px,
+    transparent 1px
+  );
+  background-size: 5px 5px;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+
+/* BlurBlock — 캡슐 스트로크 WebGL 오버레이 (필요 시 래퍼에 className="blur-block-layer" 등으로 사용) */
+.blur-block-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: exclusion;
+  opacity: 0.78;
+  filter: blur(0.5px);
+}
+
