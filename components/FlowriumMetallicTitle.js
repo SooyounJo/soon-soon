@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import MetallicPaint from './MetallicPaint';
 
 const FONT_STACK = '"Bagel Fat One", cursive';
-const TEXT = 'FLOWRIUM';
+export const FLOWRIUM_TEXT = 'FLOWRIUM';
 
 /** 결정적 스티플용 간단 PRNG (가장자리 더스트) */
 function mulberry32(seed) {
@@ -94,15 +94,26 @@ function applyEdgeDustToImageData(img, w, h, rng) {
 
 /**
  * Bagel Fat One으로 텍스트를 캔버스에 그려 MetallicPaint 텍스처로 사용합니다.
+ * @param {string} text 한 글자 또는 전체 단어
  */
-function makeFlowriumTextureDataUrl() {
-  const w = 3600;
+function makeFlowriumTextureDataUrl(text) {
   const h = 1010;
   const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
+
+  let fontSize = text.length === 1 ? 720 : 600;
+  ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
+  let w;
+  if (text.length === 1) {
+    const tw = ctx.measureText(text).width;
+    w = Math.ceil(Math.min(1400, Math.max(420, tw * 1.22 + 100)));
+  } else {
+    w = 3600;
+  }
+
+  canvas.width = w;
+  canvas.height = h;
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
@@ -110,23 +121,34 @@ function makeFlowriumTextureDataUrl() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  let fontSize = 600;
-  ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
-  while (ctx.measureText(TEXT).width > w * 0.92 && fontSize > 120) {
-    fontSize -= 8;
+  if (text.length > 1) {
     ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
+    while (ctx.measureText(text).width > w * 0.92 && fontSize > 120) {
+      fontSize -= 8;
+      ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
+    }
+  } else {
+    ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
+    while (ctx.measureText(text).width > w * 0.88 && fontSize > 140) {
+      fontSize -= 10;
+      ctx.font = `400 ${fontSize}px ${FONT_STACK}`;
+    }
   }
 
-  ctx.fillText(TEXT, w / 2, h / 2);
+  ctx.fillText(text, w / 2, h / 2);
 
+  const dustSeed =
+    text.length === 1
+      ? 0xca7ba12 ^ (text.charCodeAt(0) * 1315423911)
+      : 0xca7ba12;
   const img = ctx.getImageData(0, 0, w, h);
-  applyEdgeDustToImageData(img, w, h, mulberry32(0xca7ba12));
+  applyEdgeDustToImageData(img, w, h, mulberry32(dustSeed >>> 0));
   ctx.putImageData(img, 0, 0);
 
   return canvas.toDataURL('image/png');
 }
 
-export default function FlowriumMetallicTitle(props) {
+export default function FlowriumMetallicTitle({ text = FLOWRIUM_TEXT, ...props }) {
   const [imageSrc, setImageSrc] = useState(null);
 
   useEffect(() => {
@@ -140,7 +162,7 @@ export default function FlowriumMetallicTitle(props) {
         /* ignore */
       }
       if (cancelled) return;
-      const url = makeFlowriumTextureDataUrl();
+      const url = makeFlowriumTextureDataUrl(text);
       if (!cancelled && url) setImageSrc(url);
     };
 
@@ -148,7 +170,7 @@ export default function FlowriumMetallicTitle(props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [text]);
 
   /* SVG를 texture로 쓰면 외부 웹폰트가 적용되지 않아 세리프로 깨짐 — 캔버스(Bagel 로드 후)만 사용 */
   if (!imageSrc) {

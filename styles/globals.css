@@ -18,22 +18,48 @@ body {
   min-height: 100%;
 }
 
+/* Next 루트가 뷰포트 높이를 채우지 않으면 fixed 배경 위·아래에 body 색이 비칠 수 있음 */
+#__next {
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
 html {
   overflow-x: hidden;
-  /* 구이 렌즈: 물방울 2(크기 다름, JS 위치) + 커서 + 꼬리 → mask add */
-  --spot-r: min(20vmin, 26vw);
-  --spot-r-goo: min(28vmin, 34vw);
-  --spot-r-pre-lg: min(24vmin, 32vw);
-  --spot-r-pre-sm: min(14vmin, 18vw);
-  --spot-hard: 86%;
-  --spot-fa: 91%;
-  --spot-fb: 96%;
+  overflow-y: auto;
+  /* 구이 렌즈: 커서(빠른 점) + 꼬리(스무스) → mask 합성
+     외곽 페더를 짧게 → 물방울처럼 경계가 또렷하게 */
+  --spot-r: min(15vmin, 20vw);
+  --spot-r-goo: min(21vmin, 26vw);
+  --spot-hard: 90%;
+  --spot-fa: 92%;
+  --spot-fb: 95.5%;
   --spot-fast-x: 50vw;
   --spot-fast-y: 50vh;
-  --spot-pre-1-x: 50vw;
-  --spot-pre-1-y: 50vh;
-  --spot-pre-2-x: 50vw;
-  --spot-pre-2-y: 50vh;
+}
+
+/* 메인 히어로: 스크롤은 쓰되 스크롤바만 숨김 */
+html.flowrium-home {
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.flowrium-home::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+html.flowrium-home body {
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
 body {
@@ -67,15 +93,33 @@ body {
     0 0 1px rgba(0, 0, 0, 0.06);
 }
 
-/* 메인 배경 maingra.png: 풀스크린, 좌우 꽉 참(cover) */
+/* 메인 배경 maingra.png: 풀스크린, 좌우 꽉 참(cover)
+   inset을 살짝 넘겨 서브픽셀/모바일 뷰포트에서 위·아래 디더가 끊기지 않게 */
 .bg-flower {
   position: fixed;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  width: auto;
+  height: auto;
+  min-height: calc(100vh + 6px);
+  min-height: calc(100dvh + 6px);
+  min-height: calc(100svh + 6px);
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
+  background: #f4f4f2;
+  isolation: isolate;
+}
+
+/* 이미지·글라스만 클립 — 디더는 바깥으로 overscan 가능 */
+.bg-flower-clip {
+  position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: #f4f4f2;
-  isolation: isolate;
 }
 
 .bg-flower-video {
@@ -94,6 +138,8 @@ body {
   transform-origin: center center;
   filter: url(#flowrium-blur-soak) grayscale(0.88) contrast(1.1) brightness(0.98);
   -webkit-filter: url(#flowrium-blur-soak) grayscale(0.88) contrast(1.1) brightness(0.98);
+  opacity: var(--flowrium-blur-op, 1);
+  transition: opacity 0.22s ease-out;
 }
 
 /* 블러·디더 위 배경만 리퀴드 글라스 느낌 — 커서 선명 원(마스크 안)에는 적용 안 함 */
@@ -106,28 +152,14 @@ body {
   backdrop-filter: saturate(1.3) brightness(1.05);
   -webkit-backdrop-filter: saturate(1.3) brightness(1.05);
   box-shadow: inset 0 0 70px rgba(255, 255, 255, 0.07);
+  opacity: var(--flowrium-glass-op, 1);
+  transition: opacity 0.22s ease-out;
 }
 
 /* 중심 투명(구멍) → 바깥만 글라스: 각 구멍을 multiply 로 겹침 */
 .bg-glass-outer-masked {
   mask-image:
     radial-gradient(
-      circle var(--spot-r-pre-lg) at var(--spot-pre-1-x) var(--spot-pre-1-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.4) var(--spot-fa),
-      rgba(255, 255, 255, 0.9) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
-      circle var(--spot-r-pre-sm) at var(--spot-pre-2-x) var(--spot-pre-2-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.4) var(--spot-fa),
-      rgba(255, 255, 255, 0.9) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
       circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
       rgba(0, 0, 0, 0) 0%,
       rgba(0, 0, 0, 0) var(--spot-hard),
@@ -143,25 +175,9 @@ body {
       rgba(255, 255, 255, 0.9) var(--spot-fb),
       #fff 100%
     );
-  mask-composite: multiply, multiply, multiply;
+  mask-composite: multiply;
   -webkit-mask-image:
     radial-gradient(
-      circle var(--spot-r-pre-lg) at var(--spot-pre-1-x) var(--spot-pre-1-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.4) var(--spot-fa),
-      rgba(255, 255, 255, 0.9) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
-      circle var(--spot-r-pre-sm) at var(--spot-pre-2-x) var(--spot-pre-2-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.4) var(--spot-fa),
-      rgba(255, 255, 255, 0.9) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
       circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
       rgba(0, 0, 0, 0) 0%,
       rgba(0, 0, 0, 0) var(--spot-hard),
@@ -177,33 +193,17 @@ body {
       rgba(255, 255, 255, 0.9) var(--spot-fb),
       #fff 100%
     );
-  -webkit-mask-composite: multiply, multiply, multiply;
+  -webkit-mask-composite: multiply;
   mask-mode: alpha;
 }
 
-/* 선명 이미지: 물방울 2(크기 다름) + 커서 + 꼬리 — mask add 로 가까우면 메타볼처럼 이어짐 */
+/* 선명 이미지: 커서 + 꼬리 — mask add 로 메타볼처럼 이어짐 */
 .bg-flower-video-sharp {
   z-index: 5;
   transform: scale(1.002);
   transform-origin: center center;
   mask-image:
     radial-gradient(
-      circle var(--spot-r-pre-lg) at var(--spot-pre-1-x) var(--spot-pre-1-y),
-      #fff 0%,
-      #fff var(--spot-hard),
-      rgba(255, 255, 255, 0.62) var(--spot-fa),
-      rgba(255, 255, 255, 0.18) var(--spot-fb),
-      rgba(255, 255, 255, 0) 100%
-    ),
-    radial-gradient(
-      circle var(--spot-r-pre-sm) at var(--spot-pre-2-x) var(--spot-pre-2-y),
-      #fff 0%,
-      #fff var(--spot-hard),
-      rgba(255, 255, 255, 0.62) var(--spot-fa),
-      rgba(255, 255, 255, 0.18) var(--spot-fb),
-      rgba(255, 255, 255, 0) 100%
-    ),
-    radial-gradient(
       circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
       #fff 0%,
       #fff var(--spot-hard),
@@ -219,25 +219,9 @@ body {
       rgba(255, 255, 255, 0.18) var(--spot-fb),
       rgba(255, 255, 255, 0) 100%
     );
-  mask-composite: add, add, add;
+  mask-composite: add;
   -webkit-mask-image:
     radial-gradient(
-      circle var(--spot-r-pre-lg) at var(--spot-pre-1-x) var(--spot-pre-1-y),
-      #fff 0%,
-      #fff var(--spot-hard),
-      rgba(255, 255, 255, 0.62) var(--spot-fa),
-      rgba(255, 255, 255, 0.18) var(--spot-fb),
-      rgba(255, 255, 255, 0) 100%
-    ),
-    radial-gradient(
-      circle var(--spot-r-pre-sm) at var(--spot-pre-2-x) var(--spot-pre-2-y),
-      #fff 0%,
-      #fff var(--spot-hard),
-      rgba(255, 255, 255, 0.62) var(--spot-fa),
-      rgba(255, 255, 255, 0.18) var(--spot-fb),
-      rgba(255, 255, 255, 0) 100%
-    ),
-    radial-gradient(
       circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
       #fff 0%,
       #fff var(--spot-hard),
@@ -253,19 +237,26 @@ body {
       rgba(255, 255, 255, 0.18) var(--spot-fb),
       rgba(255, 255, 255, 0) 100%
     );
-  -webkit-mask-composite: plus-lighter, plus-lighter, plus-lighter;
+  -webkit-mask-composite: plus-lighter;
   mask-mode: alpha;
   /* 도넛 레이어 대신: 마스크 합쳐진 실루엣 외곽에만 그림자 → 겹칠 때 링 이중 없음 */
-  filter: drop-shadow(0 0 1px rgba(255, 248, 225, 0.45))
-    drop-shadow(0 0 22px rgba(255, 240, 210, 0.18));
+  filter: drop-shadow(0 0 1.5px rgba(255, 252, 245, 0.55))
+    drop-shadow(0 0 0.5px rgba(40, 35, 30, 0.22))
+    drop-shadow(0 0 18px rgba(255, 238, 200, 0.16));
+  transition: opacity 0.45s ease;
 }
 
 /* 배경 미세 할프톤 — 스포트라이트 밖에서만 */
 .bg-dither {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   z-index: 2;
   pointer-events: none;
+  background-repeat: repeat;
+  background-position: 0 0;
   background-image: radial-gradient(
     circle at 1px 1px,
     rgba(20, 20, 20, 0.16) 0.5px,
@@ -274,14 +265,20 @@ body {
   background-size: 3px 3px;
   mix-blend-mode: multiply;
   opacity: 0.5;
+  transition: opacity 0.4s ease;
 }
 
 /* 거친 스티플(참조 이미지의 질감/먼지 할프톤) — 블러 위·선명 레이어 아래 */
 .bg-halftone-coarse {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   z-index: 3;
   pointer-events: none;
+  background-repeat: repeat;
+  background-position: 0 0;
   background-image: radial-gradient(
     circle at 2px 2px,
     rgba(0, 0, 0, 0.38) 0.85px,
@@ -290,28 +287,42 @@ body {
   background-size: 5px 5px;
   mix-blend-mode: multiply;
   opacity: 0.72;
+  transition: opacity 0.4s ease;
+}
+
+/* 배경 디더: 뷰포트보다 크게 — 상단/하단 끊김·노치 대응 (overflow는 bg-flower-clip만 hidden) */
+.bg-flower .bg-dither-viewport {
+  position: absolute;
+  inset: auto;
+  top: calc(-24px - env(safe-area-inset-top, 0px));
+  left: calc(-16px - env(safe-area-inset-left, 0px));
+  right: calc(-16px - env(safe-area-inset-right, 0px));
+  bottom: calc(-24px - env(safe-area-inset-bottom, 0px));
+  width: auto;
+  height: auto;
+  min-height: calc(
+    100vh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  min-height: calc(
+    100dvh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  min-height: calc(
+    100svh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+}
+
+.bg-flower .bg-halftone-coarse.bg-dither-viewport {
+  z-index: 3;
+}
+
+.bg-flower .bg-dither.bg-dither-viewport {
+  z-index: 2;
 }
 
 /* 선명 원과 동일 스톱 — 디더는 렌즈 밖에서만 */
 .bg-dither-masked {
   mask-image:
     radial-gradient(
-      circle var(--spot-r-pre-lg) at var(--spot-pre-1-x) var(--spot-pre-1-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.38) var(--spot-fa),
-      rgba(255, 255, 255, 0.88) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
-      circle var(--spot-r-pre-sm) at var(--spot-pre-2-x) var(--spot-pre-2-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.38) var(--spot-fa),
-      rgba(255, 255, 255, 0.88) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
       circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
       rgba(0, 0, 0, 0) 0%,
       rgba(0, 0, 0, 0) var(--spot-hard),
@@ -327,25 +338,9 @@ body {
       rgba(255, 255, 255, 0.88) var(--spot-fb),
       #fff 100%
     );
-  mask-composite: add, add, add;
+  mask-composite: add;
   -webkit-mask-image:
     radial-gradient(
-      circle var(--spot-r-pre-lg) at var(--spot-pre-1-x) var(--spot-pre-1-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.38) var(--spot-fa),
-      rgba(255, 255, 255, 0.88) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
-      circle var(--spot-r-pre-sm) at var(--spot-pre-2-x) var(--spot-pre-2-y),
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) var(--spot-hard),
-      rgba(255, 255, 255, 0.38) var(--spot-fa),
-      rgba(255, 255, 255, 0.88) var(--spot-fb),
-      #fff 100%
-    ),
-    radial-gradient(
       circle var(--spot-r) at var(--spot-fast-x, 50vw) var(--spot-fast-y, 50vh),
       rgba(0, 0, 0, 0) 0%,
       rgba(0, 0, 0, 0) var(--spot-hard),
@@ -361,7 +356,7 @@ body {
       rgba(255, 255, 255, 0.88) var(--spot-fb),
       #fff 100%
     );
-  -webkit-mask-composite: plus-lighter, plus-lighter, plus-lighter;
+  -webkit-mask-composite: plus-lighter;
   mask-mode: alpha;
 }
 
@@ -373,6 +368,207 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+}
+
+.title-overlay-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100%;
+  transform: translateY(var(--title-stack-lift, 0px));
+  will-change: transform;
+}
+
+/* 타이포 디더: 글자 박스가 아니라 화면 전체(렌즈 마스크는 동일) */
+.title-dither.title-dither-viewport,
+.title-halftone-coarse.title-dither-viewport {
+  position: fixed;
+  inset: auto;
+  top: calc(-24px - env(safe-area-inset-top, 0px));
+  left: calc(-16px - env(safe-area-inset-left, 0px));
+  right: calc(-16px - env(safe-area-inset-right, 0px));
+  bottom: calc(-24px - env(safe-area-inset-bottom, 0px));
+  width: auto;
+  height: auto;
+  min-height: calc(
+    100vh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  min-height: calc(
+    100dvh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  min-height: calc(
+    100svh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
+  );
+  z-index: 0;
+}
+
+.title-halftone-coarse.title-dither-viewport {
+  z-index: 0;
+}
+
+html:not(.hero-revealed) .title-dither-viewport {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 랜딩: 배경·렌즈 레이어는 숨김 → hero-revealed 시 페이드인 */
+html:not(.hero-revealed) .bg-flower > * {
+  opacity: 0;
+}
+
+html.hero-revealed .bg-flower > * {
+  opacity: 1;
+  transition: opacity 1.05s ease;
+}
+
+/* 스크롤로 블러·글라스만 별도 보간 — 위 일괄 opacity:1 덮어씀 */
+html.hero-revealed .bg-flower .bg-flower-video-blur {
+  opacity: var(--flowrium-blur-op, 1);
+  transition:
+    opacity 0.24s ease-out,
+    filter 0.35s ease-out;
+}
+
+html.hero-revealed .bg-flower .bg-glass-field {
+  opacity: var(--flowrium-glass-op, 1);
+  transition: opacity 0.24s ease-out;
+}
+
+/* 인트로: 블러·오퍼시티만 (메탈릭은 reveal 후) */
+.hero-intro-title {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 4;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  font-size: clamp(2.75rem, 12vw, 7rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #0a0a0a;
+  text-align: center;
+  pointer-events: none;
+  will-change: filter, opacity;
+}
+
+html:not(.hero-revealed) .hero-intro-title {
+  animation: heroIntroTextIn 0.95s ease forwards;
+}
+
+@keyframes heroIntroTextIn {
+  from {
+    filter: blur(22px);
+    opacity: 0;
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+html.hero-revealed .hero-intro-title {
+  opacity: 0;
+  visibility: hidden;
+  animation: none;
+  transition:
+    opacity 0.38s ease,
+    visibility 0s linear 0.4s;
+}
+
+html:not(.hero-revealed) .title-letters-row {
+  opacity: 0;
+}
+
+html.hero-revealed .title-letters-row {
+  opacity: 1;
+  transition: opacity 0.72s ease 0.1s;
+}
+
+.metallic-title-inner:has(.title-letters-row) {
+  width: min(98vw, 100%);
+  height: min(52vh, 560px);
+  max-height: 88vh;
+}
+
+.title-letters-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.02rem, 0.45vw, 0.35rem);
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.title-letter {
+  --letter-i: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 12.5vw;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: 50% 88%;
+  will-change: transform;
+}
+
+.letter-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  max-height: min(50vh, 520px);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.hero-revealed) .hero-intro-title {
+    animation: none;
+    filter: none;
+    opacity: 1;
+  }
+}
+
+/* 스크롤 끝: 렌즈 마스크 제거 → 전 화면 선명 + 디더가 PNG가 아닌 타일로 전역 덮음(직사각형 밴드 방지) */
+html.flowrium-scroll-end .bg-flower-video-sharp {
+  opacity: 1;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  filter: none;
+  transition:
+    opacity 0.45s ease,
+    mask 0.5s ease,
+    -webkit-mask 0.5s ease;
+}
+
+html.flowrium-scroll-end .bg-dither.bg-dither-masked,
+html.flowrium-scroll-end .bg-halftone-coarse.bg-dither-masked {
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
+}
+
+html.flowrium-scroll-end .bg-dither {
+  opacity: 0.65;
+}
+
+html.flowrium-scroll-end .bg-halftone-coarse {
+  opacity: 0.8;
+}
+
+html.flowrium-scroll-end .title-dither.bg-dither-masked,
+html.flowrium-scroll-end .title-halftone-coarse.bg-dither-masked {
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }
 
 /* react-bits MetallicPaint */
@@ -391,7 +587,7 @@ body {
 }
 
 .title-scatter-wrap {
-  overflow: hidden;
+  overflow: visible;
 }
 
 .metallic-layer {
@@ -403,12 +599,11 @@ body {
   pointer-events: auto;
 }
 
-/* 워드마크: 미세 + 거친 할프톤 — 선명 원 밖에서만(참조 타이포 질감) */
+/* 워드마크: 미세 + 거친 할프톤 — .title-dither-viewport 로 전역(참조 타이포 질감) */
 .title-dither {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
   pointer-events: none;
+  background-repeat: repeat;
+  background-position: 0 0;
   background-image: radial-gradient(
     circle at 1px 1px,
     rgba(35, 35, 35, 0.14) 0.5px,
@@ -420,10 +615,9 @@ body {
 }
 
 .title-halftone-coarse {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
   pointer-events: none;
+  background-repeat: repeat;
+  background-position: 0 0;
   background-image: radial-gradient(
     circle at 2px 2px,
     rgba(0, 0, 0, 0.32) 0.8px,
