@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
-/* Bagel Fat One: Google Fonts — pages/index.js <Head> (family=Bagel+Fat+One&display=swap) */
+/* Bagel Fat One: pages/index.js <Head> */
 
 *,
 *::before,
@@ -18,7 +18,6 @@ body {
   min-height: 100%;
 }
 
-/* Next 루트가 뷰포트 높이를 채우지 않으면 fixed 배경 위·아래에 body 색이 비칠 수 있음 */
 #__next {
   min-height: 100%;
   min-height: 100dvh;
@@ -28,19 +27,9 @@ body {
 html {
   overflow-x: hidden;
   overflow-y: auto;
-  /* 단일 큰 렌즈 원 — 중심은 JS --dither-x/y (스무스 커서) */
-  --spot-r: min(32vmin, 40vw);
-  --spot-hard: 88%;
-  --spot-fa: 91%;
-  --spot-fb: 96%;
-  --dither-x: 50vw;
-  --dither-y: 50vh;
-  --flowrium-bg-scale: 1.1;
-  --title-white-t: 0;
-  --title-letters-gap: 0.08rem;
 }
 
-/* 메인 히어로: 스크롤은 쓰되 스크롤바만 숨김 */
+/* 메인: 스크롤은 쓰되 스크롤바만 숨김 */
 html.flowrium-home {
   overflow-x: hidden;
   overflow-y: auto;
@@ -57,33 +46,6 @@ html.flowrium-home::-webkit-scrollbar {
   background: transparent;
 }
 
-/* 랜딩: 블러 해제 전까지 페이지는 안 내려감 — 휠/스와이프는 선명도만 */
-html.flowrium-landing-scroll-lock,
-html.flowrium-landing-scroll-lock body {
-  overflow: hidden;
-  height: 100%;
-  overscroll-behavior: none;
-}
-
-html.flowrium-landing-scroll-lock {
-  touch-action: none;
-}
-
-/* 랜딩: 휠 인터랙션 후에도 문서 높이 = 뷰포트만 — 아래 빈 구역으로 스크롤되지 않게 */
-html.flowrium-landing-scroll-lock #__next {
-  height: 100%;
-  overflow: hidden;
-}
-
-html.flowrium-landing-scroll-lock main.page-landing {
-  min-height: 100vh;
-  min-height: 100dvh;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
 html.flowrium-home body {
   min-height: 100%;
   min-height: 100dvh;
@@ -92,418 +54,20 @@ html.flowrium-home body {
 
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  background: #f4f4f2;
-  color: #111111;
+  background: #000000;
+  color: #ffffff;
 }
 
-/* Google Fonts 선택 화면과 동일 스택 — https://fonts.google.com/specimen/Bagel+Fat+One */
 .bagel-fat-one-regular {
   font-family: 'Bagel Fat One', system-ui, sans-serif;
   font-weight: 400;
   font-style: normal;
 }
 
-/* 레거시: 다른 컴포넌트에서 사용 */
 .font-bagel {
   font-family: 'Bagel Fat One', system-ui, sans-serif;
   font-weight: 400;
   font-style: normal;
-}
-
-.blur-text-segment {
-  display: inline-block;
-  will-change: transform, filter, opacity;
-}
-
-.hero-blur-title {
-  margin: 0;
-  width: 100%;
-  justify-content: center;
-  font-size: clamp(2rem, 9vw, 5.25rem);
-  font-weight: 800;
-  letter-spacing: -0.055em;
-  color: #0a0a0a;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.85),
-    0 0 1px rgba(0, 0, 0, 0.06);
-}
-
-/* 메인 배경 maingra.png: 풀스크린, 좌우 꽉 참(cover)
-   inset을 살짝 넘겨 서브픽셀/모바일 뷰포트에서 위·아래 디더가 끊기지 않게 */
-.bg-flower {
-  position: fixed;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
-  width: auto;
-  height: auto;
-  min-height: calc(100vh + 6px);
-  min-height: calc(100dvh + 6px);
-  min-height: calc(100svh + 6px);
-  z-index: 0;
-  overflow: visible;
-  pointer-events: none;
-  background: #f4f4f2;
-  isolation: isolate;
-}
-
-/* 이미지·글라스만 클립 — 디더는 바깥으로 overscan 가능 */
-.bg-flower-clip {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.bg-flower-video {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-}
-
-/* 블러 레이어: 블랙 눌림 완화 — 그레이/대비 완만, 톤 업 */
-.bg-flower-video-blur {
-  transform: scale(var(--flowrium-bg-scale, 1.1));
-  transform-origin: center center;
-  filter: url(#flowrium-blur-soak) grayscale(0.52) contrast(1.02) brightness(1.1);
-  -webkit-filter: url(#flowrium-blur-soak) grayscale(0.52) contrast(1.02) brightness(1.1);
-  opacity: var(--flowrium-blur-op, 1);
-  /* rAF가 --flowrium-blur-op를 매 프레임 갱신 — transition 과 이중 보간되면 스크롤이 끊겨 보임 */
-  transition: none;
-}
-
-/* 블러·디더 위 배경만 리퀴드 글라스 느낌 — 커서 선명 원(마스크 안)에는 적용 안 함 */
-.bg-glass-field {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: saturate(1.15) brightness(1.03) blur(10px);
-  -webkit-backdrop-filter: saturate(1.15) brightness(1.03) blur(10px);
-  box-shadow: inset 0 0 70px rgba(255, 255, 255, 0.07);
-  opacity: var(--flowrium-glass-op, 1);
-  transition: none;
-}
-
-/* 중심 투명(구멍) → 바깥만 글라스 — 단일 원 */
-.bg-glass-outer-masked {
-  mask-image: radial-gradient(
-    circle var(--spot-r) at var(--dither-x, 50vw) var(--dither-y, 50vh),
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) var(--spot-hard),
-    rgba(255, 255, 255, 0.4) var(--spot-fa),
-    rgba(255, 255, 255, 0.9) var(--spot-fb),
-    #fff 100%
-  );
-  -webkit-mask-image: radial-gradient(
-    circle var(--spot-r) at var(--dither-x, 50vw) var(--dither-y, 50vh),
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) var(--spot-hard),
-    rgba(255, 255, 255, 0.4) var(--spot-fa),
-    rgba(255, 255, 255, 0.9) var(--spot-fb),
-    #fff 100%
-  );
-  mask-mode: alpha;
-}
-
-/* 전역 선명(마스크 없음): 스크롤 시 블러 레이어와 크로스페이드 — 렌즈 밖에서도 ‘풀림’ 체감 */
-.bg-flower-video-sharp-base {
-  z-index: 2;
-  transform: scale(var(--flowrium-bg-scale, 1.1));
-  transform-origin: center center;
-  object-fit: cover;
-  opacity: var(--flowrium-sharp-base-op, 0);
-  pointer-events: none;
-}
-
-/* 선명 이미지: 단일 렌즈 원 마스크 */
-.bg-flower-video-sharp {
-  z-index: 5;
-  transform: scale(var(--flowrium-bg-scale, 1.1));
-  transform-origin: center center;
-  mask-image: radial-gradient(
-    circle var(--spot-r) at var(--dither-x, 50vw) var(--dither-y, 50vh),
-    #fff 0%,
-    #fff var(--spot-hard),
-    rgba(255, 255, 255, 0.62) var(--spot-fa),
-    rgba(255, 255, 255, 0.18) var(--spot-fb),
-    rgba(255, 255, 255, 0) 100%
-  );
-  -webkit-mask-image: radial-gradient(
-    circle var(--spot-r) at var(--dither-x, 50vw) var(--dither-y, 50vh),
-    #fff 0%,
-    #fff var(--spot-hard),
-    rgba(255, 255, 255, 0.62) var(--spot-fa),
-    rgba(255, 255, 255, 0.18) var(--spot-fb),
-    rgba(255, 255, 255, 0) 100%
-  );
-  mask-mode: alpha;
-  /* 도넛 레이어 대신: 마스크 합쳐진 실루엣 외곽에만 그림자 → 겹칠 때 링 이중 없음 */
-  filter: drop-shadow(0 0 1.5px rgba(255, 252, 245, 0.55))
-    drop-shadow(0 0 0.5px rgba(40, 35, 30, 0.22))
-    drop-shadow(0 0 18px rgba(255, 238, 200, 0.16));
-  transition: none;
-}
-
-/* 배경 미세 할프톤 — 스포트라이트 밖에서만 */
-.bg-dither {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  z-index: 2;
-  pointer-events: none;
-  background-repeat: repeat;
-  background-position: 0 0;
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(72, 68, 62, 0.1) 0.5px,
-    transparent 0.62px
-  );
-  background-size: 3px 3px;
-  mix-blend-mode: multiply;
-  opacity: 0.34;
-  transition: opacity 0.4s ease;
-}
-
-/* 거친 스티플(참조 이미지의 질감/먼지 할프톤) — 블러 위·선명 레이어 아래 */
-.bg-halftone-coarse {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-  z-index: 3;
-  pointer-events: none;
-  background-repeat: repeat;
-  background-position: 0 0;
-  background-image: radial-gradient(
-    circle at 2px 2px,
-    rgba(58, 54, 48, 0.2) 0.85px,
-    transparent 1px
-  );
-  background-size: 5px 5px;
-  mix-blend-mode: multiply;
-  opacity: 0.48;
-  transition: opacity 0.4s ease;
-}
-
-/* 배경 디더: 뷰포트보다 크게 — 상단/하단 끊김·노치 대응 (overflow는 bg-flower-clip만 hidden) */
-.bg-flower .bg-dither-viewport {
-  position: absolute;
-  inset: auto;
-  top: calc(-24px - env(safe-area-inset-top, 0px));
-  left: calc(-16px - env(safe-area-inset-left, 0px));
-  right: calc(-16px - env(safe-area-inset-right, 0px));
-  bottom: calc(-24px - env(safe-area-inset-bottom, 0px));
-  width: auto;
-  height: auto;
-  min-height: calc(
-    100vh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-  min-height: calc(
-    100dvh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-  min-height: calc(
-    100svh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-}
-
-.bg-flower .bg-halftone-coarse.bg-dither-viewport {
-  z-index: 3;
-}
-
-.bg-flower .bg-dither.bg-dither-viewport {
-  z-index: 2;
-}
-
-/* 선명 원과 동일 스톱 — 디더는 렌즈 밖에서만 (단일 원) */
-.bg-dither-masked {
-  mask-image: radial-gradient(
-    circle var(--spot-r) at var(--dither-x, 50vw) var(--dither-y, 50vh),
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) var(--spot-hard),
-    rgba(255, 255, 255, 0.38) var(--spot-fa),
-    rgba(255, 255, 255, 0.88) var(--spot-fb),
-    #fff 100%
-  );
-  -webkit-mask-image: radial-gradient(
-    circle var(--spot-r) at var(--dither-x, 50vw) var(--dither-y, 50vh),
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0) var(--spot-hard),
-    rgba(255, 255, 255, 0.38) var(--spot-fa),
-    rgba(255, 255, 255, 0.88) var(--spot-fb),
-    #fff 100%
-  );
-  mask-mode: alpha;
-}
-
-.title-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.title-overlay-inner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 100%;
-  transform: translateY(var(--title-stack-lift, 0px));
-  will-change: transform;
-}
-
-/* 타이포 디더: 글자 박스가 아니라 화면 전체(렌즈 마스크는 동일) */
-.title-dither.title-dither-viewport,
-.title-halftone-coarse.title-dither-viewport {
-  position: fixed;
-  inset: auto;
-  top: calc(-24px - env(safe-area-inset-top, 0px));
-  left: calc(-16px - env(safe-area-inset-left, 0px));
-  right: calc(-16px - env(safe-area-inset-right, 0px));
-  bottom: calc(-24px - env(safe-area-inset-bottom, 0px));
-  width: auto;
-  height: auto;
-  min-height: calc(
-    100vh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-  min-height: calc(
-    100dvh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-  min-height: calc(
-    100svh + 48px + env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px)
-  );
-  z-index: 0;
-}
-
-.title-halftone-coarse.title-dither-viewport {
-  z-index: 0;
-}
-
-html:not(.hero-revealed) .title-dither-viewport {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* 랜딩(index): 첫 페인트부터 배경·타이틀 질감 — 흰 화면+검정 글씨 인트로 없음 */
-main.page-landing .bg-flower > * {
-  opacity: 1;
-}
-
-html:not(.hero-revealed) main.page-landing .title-dither-viewport {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: none;
-}
-
-/* 랜딩: 단일 워드마크는 첫 페인트부터 중앙 표시 */
-html:not(.hero-revealed) main.page-landing .hero-wordmark-wrap {
-  opacity: 1;
-}
-
-html.hero-revealed .bg-flower > * {
-  opacity: 1;
-  transition: opacity 1.05s ease;
-}
-
-/* 스크롤로 블러·글라스만 별도 보간 — 위 일괄 opacity:1 덮어씀 */
-/* 스크롤 진행은 JS에서 스무딩 — CSS transition 과 이중 보간되지 않게 none */
-html.hero-revealed .bg-flower .bg-flower-video-blur {
-  opacity: var(--flowrium-blur-op, 1);
-  transition: none;
-}
-
-html.hero-revealed .bg-flower .bg-glass-field {
-  opacity: var(--flowrium-glass-op, 1);
-  transition: none;
-}
-
-html.hero-revealed .bg-flower .bg-flower-video-sharp-base {
-  opacity: var(--flowrium-sharp-base-op, 0);
-  transition: none;
-}
-
-/* 인트로: 블러·오퍼시티만 (메탈릭은 reveal 후) */
-.hero-intro-title {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  z-index: 4;
-  margin: 0;
-  transform: translate(-50%, -50%);
-  font-size: clamp(1.85rem, 8vw, 4.75rem);
-  font-weight: 400;
-  letter-spacing: -0.055em;
-  color: #0a0a0a;
-  text-align: center;
-  pointer-events: none;
-  will-change: filter, opacity;
-}
-
-html:not(.hero-revealed) .hero-intro-title {
-  animation: heroIntroTextIn 0.95s ease forwards;
-}
-
-@keyframes heroIntroTextIn {
-  from {
-    filter: blur(22px);
-    opacity: 0;
-  }
-
-  to {
-    filter: blur(0);
-    opacity: 1;
-  }
-}
-
-html.hero-revealed .hero-intro-title {
-  opacity: 0;
-  visibility: hidden;
-  animation: none;
-  transition:
-    opacity 0.38s ease,
-    visibility 0s linear 0.4s;
-}
-
-html:not(.hero-revealed) .title-letters-row {
-  opacity: 0;
-}
-
-html.hero-revealed .title-letters-row {
-  opacity: 1;
-  transition: opacity 0.72s ease 0.1s;
-}
-
-html:not(.hero-revealed) .hero-wordmark-wrap {
-  opacity: 0;
-}
-
-html.hero-revealed .hero-wordmark-wrap {
-  opacity: 1;
-  transition: opacity 0.72s ease 0.1s;
-}
-
-/* 랜딩: 워드마크 인트로는 h1에만 — 래퍼 opacity 전환과 겹치지 않게 */
-html.hero-revealed main.page-landing .hero-wordmark-wrap {
-  opacity: 1;
-  transition: none;
 }
 
 .hero-wordmark-wrap {
@@ -518,26 +82,6 @@ html.hero-revealed main.page-landing .hero-wordmark-wrap {
   will-change: filter;
 }
 
-/* 피그마 워드마크: Bagel 128px / line 185px, #fff — 좌표는 뷰포트 중앙 정렬로 환산 */
-.hero-flowrium-mark {
-  margin: 0;
-  padding: 0;
-  max-width: min(658px, 94vw);
-  width: 100%;
-  font-family: 'Bagel Fat One', system-ui, sans-serif;
-  font-size: clamp(2.5rem, 12vw, 128px);
-  line-height: calc(185 / 128);
-  font-weight: 400;
-  font-style: normal;
-  color: #ffffff;
-  text-align: center;
-  white-space: nowrap;
-  transform-origin: 50% 88%;
-  will-change: transform, opacity, filter;
-  pointer-events: none;
-}
-
-/* 캔버스 래퍼에 opacity 인트로 금지 — 투명 WebGL + opacity:0 이면 뒤 폴백 타이포까지 안 보임 */
 @keyframes heroFlowriumSoakIn {
   from {
     transform: translateY(16px);
@@ -558,26 +102,28 @@ html.hero-revealed main.page-landing .hero-wordmark-wrap {
   }
 }
 
-/* 랜딩: CSS 글래스 폴백 + WebGL MeshTransmission(굴절) — 동일 Bagel woff2 */
 main.page-landing .hero-flowrium-glass-shell {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: clamp(320px, 56vw, 680px);
+  min-height: 100dvh;
+  min-height: 100svh;
   overflow: visible;
 }
 
 .hero-wordmark-wrap.hero-wordmark-wrap--glass-hybrid {
   filter: none;
-  max-width: min(960px, 99vw);
+  max-width: 100%;
   width: 100%;
-  min-height: clamp(320px, 56vw, 680px);
+  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: auto;
+  align-self: stretch;
 }
 
 main.page-landing .hero-flowrium-webgl-mount {
@@ -585,16 +131,14 @@ main.page-landing .hero-flowrium-webgl-mount {
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   pointer-events: auto;
   animation: heroFlowriumSoakIn 1.12s ease 0.06s both;
-  /* WebGL 프레이밍: 3D 회전·베벌이 캔버스 가장자리에 닿지 않게 */
-  padding: clamp(10px, 2.4vw, 28px);
+  padding: clamp(6px, 1.5vmin, 20px);
   box-sizing: border-box;
 }
 
-/* WebGL 마운트 후: 투명 캔버스 빈 영역에서도 CSS 글자가 비치지 않게 완전 비표시 */
 main.page-landing
   .hero-flowrium-glass-shell.hero-flowrium-webgl-text-ready
   .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback {
@@ -614,9 +158,12 @@ main.page-landing
 .hero-flowrium-glass-root {
   position: relative;
   width: 100%;
-  max-width: min(960px, 99vw);
-  min-height: clamp(280px, 50vw, 600px);
-  height: clamp(280px, 50vw, 600px);
+  max-width: 100%;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-height: 0;
+  height: 100%;
+  min-height: 100%;
   overflow: visible;
 }
 
@@ -632,15 +179,14 @@ main.page-landing
   touch-action: none;
 }
 
-/* WebGL 로드 전·실패 시: 더 둥글고 글로시한 평면 글래스 (Bagel) */
 main.page-landing .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback {
   position: relative;
   z-index: 0;
   margin: 0;
   padding: 0;
   width: 100%;
-  max-width: min(658px, 94vw);
-  font-size: clamp(2.5rem, 12vw, 128px);
+  max-width: min(820px, 96vw);
+  font-size: clamp(3rem, 14vw, 152px);
   line-height: calc(185 / 128);
   text-align: center;
   white-space: nowrap;
@@ -672,6 +218,31 @@ main.page-landing .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback 
     drop-shadow(0 14px 42px rgba(0, 0, 0, 0.12));
 }
 
+main.page-landing
+  .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback.hero-soon-soon-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  white-space: normal;
+  max-width: min(96vw, 1200px);
+  width: 100%;
+  font-size: clamp(5rem, 14.5vw, 132px);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+}
+
+main.page-landing .hero-soon-soon-line {
+  display: block;
+}
+
+main.page-landing .hero-soon-soon-dash {
+  display: block;
+  font-size: 0.58em;
+  line-height: 0.88;
+  margin: -0.04em 0;
+}
+
 @supports not (background-clip: text) {
   main.page-landing .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback {
     color: rgba(255, 255, 255, 0.92);
@@ -700,237 +271,53 @@ main.page-landing .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback 
   }
 }
 
-.metallic-title-inner:has(.title-letters-row) {
-  width: min(98vw, 100%);
-  height: min(34vh, 360px);
-  max-height: 54vh;
-}
-
-/* 메인 워드마크(WebGL 스택): 밝은 톤만 — 검정 스트로크성 섀도 없음 */
-html.hero-revealed .metallic-title-inner.title-scatter-wrap {
-  filter:
-    drop-shadow(0 1px 1px rgba(255, 255, 255, 0.65))
-    drop-shadow(0 2px 6px rgba(232, 230, 226, 0.5))
-    drop-shadow(0 10px 24px rgba(210, 208, 204, 0.28));
-}
-
-/* 랜딩 단일 타이포: 색은 #fff 고정, WebGL 스택과 동일 드롭쉐도만 */
-.hero-wordmark-wrap.title-scatter-wrap {
-  filter:
-    drop-shadow(0 1px 1px rgba(255, 255, 255, 0.65))
-    drop-shadow(0 2px 6px rgba(232, 230, 226, 0.5))
-    drop-shadow(0 10px 24px rgba(210, 208, 204, 0.28));
-}
-
-/* flex:1 균등 분배가 아니라 글자 크기만큼만 차지 — gap·화이트는 JS 스크롤 보간 */
-.title-letters-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--title-letters-gap, 0.08rem);
-  width: 100%;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-  filter: brightness(calc(1 + 0.58 * var(--title-white-t, 0)))
-    saturate(calc(1 - 0.42 * var(--title-white-t, 0)));
-  will-change: filter, gap;
-}
-
-.title-letter {
-  --letter-i: 0;
-  flex: 0 0 auto;
-  width: clamp(1.75rem, 7.8vw, 4.35rem);
-  max-width: min(11vw, 14vh);
-  height: auto;
-  aspect-ratio: 1;
-  max-height: min(32vh, 340px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: 50% 88%;
-  will-change: transform;
-}
-
-.letter-canvas-wrap {
-  position: relative;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  max-height: inherit;
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html:not(.hero-revealed) .hero-intro-title {
-    animation: none;
-    filter: none;
-    opacity: 1;
-  }
-
-}
-
-/* 랜딩 글래스 커서 모드 — 시스템 커서 숨김 */
 html.flowrium-glass-cursor,
 html.flowrium-glass-cursor body {
   cursor: none !important;
 }
 
-/* 스크롤 끝: 렌즈 마스크 제거 — JS smoothP와 같은 타이밍이 되도록 mask 전환 지연(transition) 없음 */
-html.flowrium-scroll-end .bg-flower-video-sharp {
-  opacity: 1;
-  mask-image: none !important;
-  -webkit-mask-image: none !important;
-  filter: none;
-  transition: none;
+.flowrium-glass-cursor-webgl,
+.flowrium-glass-cursor-webgl canvas {
+  pointer-events: none !important;
 }
 
-html.flowrium-scroll-end .bg-dither.bg-dither-masked,
-html.flowrium-scroll-end .bg-halftone-coarse.bg-dither-masked {
-  mask-image: none !important;
-  -webkit-mask-image: none !important;
-  mask: none !important;
-  -webkit-mask: none !important;
+:root {
+  --flowrium-mint-bg: #000000;
 }
 
-html.flowrium-scroll-end .bg-dither {
-  opacity: 0.48;
+main.page-landing.page-landing--mint {
+  background: var(--flowrium-mint-bg);
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-html.flowrium-scroll-end .bg-halftone-coarse {
-  opacity: 0.58;
-}
-
-html.flowrium-scroll-end .title-dither.bg-dither-masked,
-html.flowrium-scroll-end .title-halftone-coarse.bg-dither-masked {
-  mask-image: none !important;
-  -webkit-mask-image: none !important;
-}
-
-/* react-bits MetallicPaint */
-.paint-container {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.metallic-title-inner {
+main.page-landing.page-landing--scroll-gravity {
   position: relative;
-  width: min(98vw, 124200px);
-  height: min(88vh, 51300px);
-  max-height: 51300px;
+  min-height: 380vh;
 }
 
-.title-scatter-wrap {
-  overflow: visible;
-}
-
-.metallic-layer {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  /* 부모는 pointer-events: none — 캔버스만 마우스를 받아 MetallicPaint 반응 */
-  pointer-events: auto;
-}
-
-/* 워드마크: 미세 + 거친 할프톤 — .title-dither-viewport 로 전역(참조 타이포 질감) */
-.title-dither {
-  pointer-events: none;
-  background-repeat: repeat;
-  background-position: 0 0;
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    rgba(80, 76, 70, 0.09) 0.5px,
-    transparent 0.62px
-  );
-  background-size: 3px 3px;
-  mix-blend-mode: multiply;
-  opacity: 0.26;
-}
-
-.title-halftone-coarse {
-  pointer-events: none;
-  background-repeat: repeat;
-  background-position: 0 0;
-  background-image: radial-gradient(
-    circle at 2px 2px,
-    rgba(62, 58, 52, 0.18) 0.8px,
-    transparent 1px
-  );
-  background-size: 5px 5px;
-  mix-blend-mode: multiply;
-  opacity: 0.4;
-}
-
-/* BlurBlock — 캡슐 스트로크 WebGL 오버레이 (필요 시 래퍼에 className="blur-block-layer" 등으로 사용) */
-.blur-block-layer {
-  position: absolute;
+.landing-hero.landing-hero--fixed-gravity {
+  position: fixed;
   inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  mix-blend-mode: exclusion;
-  opacity: 0.78;
-  filter: blur(0.5px);
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 1;
 }
 
-/* ─── 랜딩: 문서 스크롤 히어로 (고정 풀스크린 렌즈·rAF 스크롤 제거) ─── */
+.landing-scroll-spacer {
+  height: 320vh;
+  width: 100%;
+  pointer-events: none;
+}
+
 .landing-hero {
   position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   isolation: isolate;
   overflow: hidden;
-  background: #f4f4f2;
-}
-
-.landing-hero .bg-flower {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-}
-
-/* 이중 비디오: 블러 레이어 ↔ 선명 레이어 — --landing-sharp-t (JS, 0→1) */
-.landing-hero .bg-flower-clip .landing-hero-video-sharp {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  transform: scale(1.06);
-  transform-origin: center center;
-  opacity: var(--landing-sharp-t, 0);
-  filter: none;
-  -webkit-filter: none;
-  transition: opacity 0.45s ease-out;
-  pointer-events: none;
-}
-
-.landing-hero .bg-flower-clip .landing-hero-video-blur-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  transform: scale(1.06);
-  transform-origin: center center;
-  opacity: calc(1 - var(--landing-sharp-t, 0));
-  filter: url(#flowrium-blur-landing) grayscale(0.4) contrast(1.05) brightness(1.08);
-  -webkit-filter: url(#flowrium-blur-landing) grayscale(0.4) contrast(1.05) brightness(1.08);
-  transition: opacity 0.45s ease-out;
-  pointer-events: none;
-}
-
-.landing-hero-video {
-  display: block;
-  pointer-events: none;
+  background: var(--flowrium-mint-bg);
 }
 
 .landing-hero-title {
@@ -945,25 +332,15 @@ html.flowrium-scroll-end .title-halftone-coarse.bg-dither-masked {
   pointer-events: none;
 }
 
-.landing-hero-title > .title-dither.title-dither-viewport,
-.landing-hero-title > .title-halftone-coarse.title-dither-viewport {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 100%;
-}
-
 .landing-hero-title-inner {
   position: relative;
   z-index: 3;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   width: 100%;
-  min-height: 0;
+  min-height: 100dvh;
+  min-height: 100svh;
   transform: none;
-  /* 부모 .landing-hero-title 의 pointer-events: none 상속 끊기 — WebGL 호버까지 전달 */
   pointer-events: auto;
 }
-

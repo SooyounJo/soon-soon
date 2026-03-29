@@ -1,4 +1,12 @@
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import {
+  Suspense,
+  createContext,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import {
   Bounds,
@@ -11,28 +19,74 @@ import {
 import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js';
 import * as THREE from 'three';
 
+const _v = new THREE.Vector3();
+const _closest = new THREE.Vector3();
+const _side = new THREE.Vector3();
+
+/** 물방울 — 소수만, r·X/Z 다양 */
+const WATER_DROPLETS = [
+  { base: [5.9, 0, 0.52], r: 0.34, ph: [0.2, 0.9, 1.4] },
+  { base: [-6.0, 0, 0.45], r: 0.16, ph: [1.1, 0.3, 2.0] },
+  { base: [4.4, 0, 0.55], r: 0.28, ph: [0.7, 1.6, 0.5] },
+  { base: [-4.6, 0, 0.65], r: 0.2, ph: [1.5, 0.8, 1.2] },
+  { base: [0.2, 0, 0.9], r: 0.32, ph: [0.9, 1.3, 0.6] },
+  { base: [-0.35, 0, 0.5], r: 0.15, ph: [1.3, 0.6, 1.1] },
+  { base: [2.5, 0, 0.75], r: 0.22, ph: [0.33, 1.42, 2.15] },
+  { base: [-2.6, 0, 0.3], r: 0.26, ph: [1.62, 0.25, 0.72] },
+];
+
+/** 비 궤도: 월드 Y(위→아래) */
+const RAIN_Y_TOP = 4.6;
+const RAIN_Y_BOTTOM = -4.2;
+
+/** 글자·방울 낙하 강도 (월드 Y, 음수 = 아래) */
+const LETTER_FALL_DIST = 6.2;
+const LETTER_SCATTER = 2.35;
+const DROPLET_FLOOR_Y = -5.85;
+
 /** `public/fonts/BagelFatOne-Regular.ttf` — Three `TTFLoader`가 런타임에 typeface 형으로 파싱 (별도 JSON 불필요) */
 const BAGEL_TTF = '/fonts/BagelFatOne-Regular.ttf';
 
-const WORD = 'FLOWRIUM';
-const LETTERS = Array.from(WORD);
+/** 세 줄: soon / - / soon — Bounds가 뷰포트에 맞춰 확대 */
+const LINES = ['soon', '-', 'soon'];
 
-/** 입체 스케일 — 작을수록 뷰에 여유 (Bounds 클리핑 완화) */
-const TEXT_SIZE = 0.48;
+/** 입체 스케일 — 화면 대비 (물방울 줄인 만큼 타이포 비중↑) */
+const TEXT_SIZE = 1.12;
+/** 줄 사이(라인 중심 간격) */
+const LINE_STEP_EM = 1.18;
 /** Text3D Z 익스트루드 */
-const EXTRUDE_DEPTH = 0.12;
-const BEVEL_THICKNESS = 0.05;
-const BEVEL_SIZE = 0.04;
-/** 세그먼트 ↓ = 폴리곤·렉 감소 */
+const EXTRUDE_DEPTH = 0.15;
+const BEVEL_THICKNESS = 0.055;
+const BEVEL_SIZE = 0.048;
 const BEVEL_SEGMENTS = 5;
 const CURVE_SEGMENTS = 10;
 
-/** MeshTransmission FBO 캡처 시 배경 대역 — 블러 영상 톤에 맞춘 민트·그레이 */
-const GLASS_CAPTURE_BG = new THREE.Color('#c2d4cc');
+/** 페이지·씬·굴절 FBO 공통 블랙 (--flowrium-mint-bg) */
+const SCENE_BG = '#000000';
+const SCENE_CLEAR_HEX = 0x000000;
+const GLASS_CAPTURE_BG = new THREE.Color(SCENE_BG);
+
+/** 스크롤 낙하 진행 0→1 (Canvas 내부에서 useFrame으로 스무딩) */
+const ScrollFallContext = createContext(
+  /** @type {React.MutableRefObject<number>} */ ({ current: 0 })
+);
+
+function easeScrollFall(p) {
+  const u = Math.min(1, Math.max(0, p));
+  return u * u * (3 - 2 * u);
+}
+
+function hash01(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return ((h >>> 0) % 10000) / 10000;
+}
 
 /**
- * typeface 데이터의 glyph.ha(어드밴스)로 각 글자 중심 X — 한 줄 정렬
- * (고정 step 보다 폰트 메트릭에 맞춤)
+ * typeface glyph.ha로 한 줄의 글자 중심 X
  */
 function getLetterCenters(fontData, word, size) {
   const resolution = fontData.resolution || 1000;
@@ -53,6 +107,45 @@ function getLetterCenters(fontData, word, size) {
   return centers;
 }
 
+/**
+ * 멀티라인: 각 글자 world 위치 [x,y,z] (y는 위로 +)
+ */
+function buildLetterLayout(fontData, lines, size) {
+  const lineStep = size * LINE_STEP_EM;
+  const n = lines.length;
+  const items = [];
+  for (let li = 0; li < n; li++) {
+    const line = lines[li];
+    const y = ((n - 1) / 2 - li) * lineStep;
+    const centers = getLetterCenters(fontData, line, size);
+    const chars = Array.from(line);
+    for (let i = 0; i < chars.length; i++) {
+      items.push({
+        char: chars[i],
+        position: [centers[i][0], y, 0],
+        key: `L${li}-C${i}-${chars[i]}`,
+      });
+    }
+  }
+  return items;
+}
+
+/**
+ * MeshTransmission 샘플 일관을 위해 씬 배경·클리어를 페이지와 동일 색으로 통일.
+ */
+function SceneSolidBackdrop() {
+  const scene = useThree((s) => s.scene);
+  const invalidate = useThree((s) => s.invalidate);
+  useLayoutEffect(() => {
+    scene.background = new THREE.Color(SCENE_BG);
+    invalidate();
+    return () => {
+      scene.background = null;
+    };
+  }, [scene, invalidate]);
+  return null;
+}
+
 /** demand 루프: 로드·Bounds fit 동안 충분히 invalidate */
 function DemandBootFrames() {
   const invalidate = useThree((s) => s.invalidate);
@@ -61,7 +154,7 @@ function DemandBootFrames() {
     const t0 = performance.now();
     const tick = (now) => {
       invalidate();
-      if (now - t0 < 720) raf = requestAnimationFrame(tick);
+      if (now - t0 < 880) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
@@ -79,62 +172,128 @@ function RefitBoundsAfterLoad() {
       invalidate();
     };
     run();
-    const ids = [80, 240, 600].map((ms) => window.setTimeout(run, ms));
+    const ids = [80, 240, 600, 1200].map((ms) => window.setTimeout(run, ms));
     return () => ids.forEach((id) => window.clearTimeout(id));
   }, [api, invalidate]);
   return null;
+}
+
+/** 물방울 — 물에 가깝게(IOR·톤), 구는 살짝 찌그러진 물방울 형태 */
+function DropletMaterial() {
+  return (
+    <MeshTransmissionMaterial
+      backside
+      backsideThickness={0.055}
+      backsideEnvMapIntensity={0.82}
+      samples={2}
+      resolution={128}
+      transmission={1}
+      thickness={0.11}
+      roughness={0.028}
+      metalness={0.015}
+      chromaticAberration={0.05}
+      anisotropicBlur={0.06}
+      distortion={0.12}
+      distortionScale={0.26}
+      temporalDistortion={0.012}
+      ior={1.333}
+      color="#f0f8ff"
+      background={GLASS_CAPTURE_BG}
+      envMapIntensity={1.15}
+    />
+  );
 }
 
 function GlassTransmission() {
   return (
     <MeshTransmissionMaterial
       backside
-      backsideThickness={0.06}
-      backsideEnvMapIntensity={0.75}
+      backsideThickness={0.055}
+      backsideEnvMapIntensity={0.9}
       samples={4}
       resolution={256}
       transmission={1}
-      thickness={0.08}
-      roughness={0.045}
-      metalness={0.06}
+      thickness={0.075}
+      roughness={0.032}
+      metalness={0.04}
       chromaticAberration={0.1}
       anisotropicBlur={0.06}
       distortion={0.16}
       distortionScale={0.35}
       temporalDistortion={0.02}
       ior={1.52}
-      color="#f5f9fc"
+      color="#ffffff"
       background={GLASS_CAPTURE_BG}
-      envMapIntensity={1.05}
+      envMapIntensity={1.32}
     />
   );
 }
 
-function ExtrudedLetter({ char, position, font }) {
+function ExtrudedLetter({ char, position, font, letterKey, floatPhase = 0 }) {
   const meshRef = useRef(null);
+  const groupRef = useRef(null);
+  const basePos = useRef(new THREE.Vector3(...position));
   const target = useRef({ rx: 0, ry: 0, z: 0 });
   const invalidate = useThree((s) => s.invalidate);
+  const scrollFallRef = useContext(ScrollFallContext);
+  const hx = useMemo(() => hash01(`${letterKey}x`), [letterKey]);
+  const hy = useMemo(() => hash01(`${letterKey}y`), [letterKey]);
+  const hz = useMemo(() => hash01(`${letterKey}z`), [letterKey]);
 
-  useFrame((_, delta) => {
-    const m = meshRef.current;
-    if (!m) return;
-    const k = Math.min(delta * 14, 0.38);
-    m.rotation.x = THREE.MathUtils.lerp(m.rotation.x, target.current.rx, k);
-    m.rotation.y = THREE.MathUtils.lerp(m.rotation.y, target.current.ry, k);
-    m.position.z = THREE.MathUtils.lerp(m.position.z, target.current.z, k);
-    const eps = 0.002;
-    if (
-      Math.abs(m.rotation.x - target.current.rx) > eps ||
-      Math.abs(m.rotation.y - target.current.ry) > eps ||
-      Math.abs(m.position.z - target.current.z) > eps
-    ) {
-      invalidate();
+  useLayoutEffect(() => {
+    basePos.current.set(position[0], position[1], position[2]);
+  }, [position]);
+
+  useFrame((state, delta) => {
+    const t = state.clock.elapsedTime;
+    const a = floatPhase;
+    const p = scrollFallRef.current;
+    const e = easeScrollFall(p);
+    const settle = 1 - e * 0.94;
+
+    const ampY = 0.042;
+    const ampX = 0.018;
+    const ampZ = 0.011;
+    const fy =
+      Math.sin(t * 1.08 + a) * ampY + Math.sin(t * 0.48 + a * 1.7) * ampY * 0.42;
+    const fx = Math.cos(t * 0.85 + a * 2.03) * ampX;
+    const fz = Math.sin(t * 0.62 + a * 0.95) * ampZ;
+
+    const ang = (hx * 6.2831853 + floatPhase) * 1.17;
+    const spreadR = e * LETTER_SCATTER;
+    const spreadX = Math.cos(ang) * spreadR * (0.35 + hx * 0.65) + (hz - 0.5) * e * 0.55;
+    const spreadZ = Math.sin(ang * 1.63) * spreadR * 0.88 + (hy - 0.5) * e * 0.9;
+    const fallY = -e * LETTER_FALL_DIST;
+
+    const g = groupRef.current;
+    if (g) {
+      g.position.set(
+        basePos.current.x + fx * settle + spreadX,
+        basePos.current.y + fy * settle + fallY,
+        basePos.current.z + fz * settle + spreadZ
+      );
+      const tumble = 1 - e * 0.35;
+      g.rotation.set(
+        e * (hy - 0.5) * 2.05 * tumble,
+        e * (hz - 0.5) * 2.65 * tumble,
+        e * (hx - 0.5) * 1.85 * tumble
+      );
     }
+
+    const m = meshRef.current;
+    if (m) {
+      const k = Math.min(delta * 14, 0.38);
+      const hover = 1 - e * 0.85;
+      m.rotation.x = THREE.MathUtils.lerp(m.rotation.x, target.current.rx * hover, k);
+      m.rotation.y = THREE.MathUtils.lerp(m.rotation.y, target.current.ry * hover, k);
+      m.position.z = THREE.MathUtils.lerp(m.position.z, target.current.z * hover, k);
+    }
+    invalidate();
   });
 
   const onHover = () => {
     document.body.style.cursor = 'pointer';
-    target.current = { rx: -0.42, ry: 0.38, z: 0.14 };
+    target.current = { rx: -0.42, ry: 0.38, z: 0.13 };
     invalidate();
   };
   const onLeave = () => {
@@ -144,7 +303,7 @@ function ExtrudedLetter({ char, position, font }) {
   };
 
   return (
-    <group position={position}>
+    <group ref={groupRef}>
       <Center>
         <Text3D
           ref={meshRef}
@@ -170,11 +329,147 @@ function ExtrudedLetter({ char, position, font }) {
   );
 }
 
-function FlowriumExtrudedLetters() {
+function WaterDropletsField() {
+  const camera = useThree((s) => s.camera);
+  const raycaster = useThree((s) => s.raycaster);
+  const invalidate = useThree((s) => s.invalidate);
+  const scrollFallRef = useContext(ScrollFallContext);
+  const stateRef = useRef(
+    WATER_DROPLETS.map((o, i) => ({
+      base: new THREE.Vector3(o.base[0], o.base[1], o.base[2]),
+      ph: o.ph,
+      r: o.r,
+      flee: new THREE.Vector3(),
+      mesh: /** @type {THREE.Mesh | null} */ (null),
+      /** 0~1: 위→아래 진행, 넘치면 다시 위에서 */
+      fall: (i / Math.max(1, WATER_DROPLETS.length) + o.ph[1] * 0.07) % 1,
+      /** 낙하 속도 (방울마다 조금씩 다름, 전체적으로 느리게) */
+      speed: 0.1 + (o.ph[0] % 1) * 0.06 + (i % 4) * 0.018,
+    }))
+  );
+
+  useFrame((state, delta) => {
+    const t = state.clock.elapsedTime;
+    const ptr = state.pointer;
+    const p = scrollFallRef.current;
+    const e = easeScrollFall(p);
+    const settle = 1 - e * 0.92;
+    raycaster.setFromCamera(ptr, camera);
+    const ray = raycaster.ray;
+    const dt = Math.min(delta * 60, 2.5);
+
+    for (const s of stateRef.current) {
+      const mesh = s.mesh;
+      if (!mesh) continue;
+
+      if (e < 0.985) {
+        s.fall += s.speed * delta * 0.22 * (1 - e * 0.75);
+        if (s.fall > 1) s.fall -= 1;
+      }
+
+      const rainY = THREE.MathUtils.lerp(RAIN_Y_TOP, RAIN_Y_BOTTOM, s.fall);
+      const by = THREE.MathUtils.lerp(rainY, DROPLET_FLOOR_Y, e);
+      const sway =
+        (Math.sin(t * 0.55 + s.ph[0]) * 0.18 + Math.sin(t * 1.1 + s.ph[1]) * 0.06) * settle;
+      const bx = s.base.x + sway;
+      const bz = (s.base.z + Math.cos(t * 0.42 + s.ph[2]) * 0.14) * (0.88 + e * 0.12);
+
+      const oc = _v.set(bx, by, bz).sub(ray.origin);
+      const proj = oc.dot(ray.direction);
+      _closest.copy(ray.origin).addScaledVector(ray.direction, Math.max(0, proj));
+      const distRay = _v.set(bx, by, bz).distanceTo(_closest);
+      const near = 1.35;
+      if (distRay < near) {
+        _v.set(bx, by, bz).sub(_closest);
+        if (_v.lengthSq() < 1e-6) _v.set(1, 0.35, 0);
+        _v.normalize();
+        const push = (near - distRay) * 2.6 * dt;
+        s.flee.addScaledVector(_v, push * 0.014);
+      }
+
+      s.flee.multiplyScalar(Math.pow(0.9, dt));
+
+      mesh.position.set(bx + s.flee.x, by + s.flee.y, bz + s.flee.z);
+      const spin = 1 - e * 0.88;
+      mesh.rotation.x = t * 0.55 * spin + s.ph[0];
+      mesh.rotation.y = t * 0.4 * spin + s.ph[1];
+    }
+
+    invalidate();
+  });
+
+  return (
+    <group>
+      {WATER_DROPLETS.map((o, i) => (
+        <mesh
+          key={i}
+          ref={(el) => {
+            stateRef.current[i].mesh = el;
+          }}
+          scale={[0.88, 1.14, 0.92]}
+          castShadow={false}
+          receiveShadow={false}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            const s = stateRef.current[i];
+            _v.copy(e.object.position).sub(camera.position).normalize();
+            s.flee.addScaledVector(_v, 0.72);
+            _side.crossVectors(_v, new THREE.Vector3(0, 1, 0));
+            if (_side.lengthSq() < 1e-4) _side.set(1, 0, 0);
+            _side.normalize();
+            s.flee.addScaledVector(_side, (Math.random() - 0.5) * 0.55);
+            document.body.style.cursor = 'pointer';
+            invalidate();
+          }}
+          onPointerOut={(e) => {
+            e.stopPropagation();
+            document.body.style.cursor = '';
+            invalidate();
+          }}
+        >
+          <sphereGeometry args={[o.r, 32, 32]} />
+          <DropletMaterial />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** 문서 스크롤 0→1 스무딩 — 글자 분해·방울 바닥에 공유 */
+function ScrollFallBridge({ children }) {
+  const target = useRef(0);
+  const smooth = useRef(0);
+  const invalidate = useThree((s) => s.invalidate);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const el = document.documentElement;
+      const maxScroll = Math.max(1, el.scrollHeight - window.innerHeight);
+      target.current = Math.min(1, window.scrollY / maxScroll);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useFrame((_, delta) => {
+    const k = 1 - Math.exp(-13 * delta);
+    smooth.current += (target.current - smooth.current) * k;
+    invalidate();
+  });
+
+  return (
+    <ScrollFallContext.Provider value={smooth}>
+      <group>{children}</group>
+    </ScrollFallContext.Provider>
+  );
+}
+
+function SoonSoonExtrudedLetters() {
   const fontData = useLoader(TTFLoader, BAGEL_TTF);
   const invalidate = useThree((s) => s.invalidate);
-  const letterPositions = useMemo(
-    () => getLetterCenters(fontData, WORD, TEXT_SIZE),
+  const letterItems = useMemo(
+    () => buildLetterLayout(fontData, LINES, TEXT_SIZE),
     [fontData]
   );
 
@@ -183,11 +478,18 @@ function FlowriumExtrudedLetters() {
   }, [fontData, invalidate]);
 
   return (
-    <Bounds fit clip={false} observe margin={0.58} maxDuration={0.22}>
+    <Bounds fit clip={false} observe={false} margin={2.05} maxDuration={0.28}>
       <RefitBoundsAfterLoad />
-      <group rotation={[0.035, -0.08, 0]}>
-        {LETTERS.map((ch, i) => (
-          <ExtrudedLetter key={`${ch}-${i}`} char={ch} position={letterPositions[i]} font={fontData} />
+      <group rotation={[0.02, -0.05, 0]}>
+        {letterItems.map(({ char, position, key }, i) => (
+          <ExtrudedLetter
+            key={key}
+            letterKey={key}
+            char={char}
+            position={position}
+            font={fontData}
+            floatPhase={i * 1.37 + char.charCodeAt(0) * 0.19}
+          />
         ))}
       </group>
     </Bounds>
@@ -208,36 +510,40 @@ export default function HeroFlowriumGlass3D() {
     <div className="hero-flowrium-glass-root hero-flowrium-glass-root--interactive">
       <Canvas
         frameloop="demand"
-        camera={{ position: [0.35, 0.1, 5.4], fov: 40 }}
+        camera={{ position: [0.15, 0.06, 9.6], fov: 44 }}
         gl={{
-          alpha: true,
+          alpha: false,
           antialias: true,
           powerPreference: 'high-performance',
           stencil: false,
         }}
         dpr={[1, 1.35]}
         onCreated={({ gl, invalidate }) => {
-          gl.setClearColor(0x000000, 0);
+          gl.setClearColor(SCENE_CLEAR_HEX, 1);
           gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.14;
+          gl.toneMappingExposure = 1.24;
           invalidate();
         }}
       >
-        <ambientLight intensity={0.16} />
+        <SceneSolidBackdrop />
+        <ambientLight intensity={0.28} />
         <directionalLight
           position={[-9, 11, 6]}
-          intensity={2.35}
-          color="#fffaf4"
+          intensity={2.85}
+          color="#fffef8"
           castShadow={false}
         />
-        <directionalLight position={[7.5, -3, 5.5]} intensity={0.72} color="#c8dcf0" />
-        <pointLight position={[-5.5, 8.5, 6.5]} intensity={0.85} color="#fffdfb" />
-        <hemisphereLight args={['#eef4ff', '#1c2218', 0.52]} />
-        <Suspense fallback={null}>
-          <DemandBootFrames />
-          <Environment preset="studio" environmentIntensity={0.98} resolution={128} />
-          <FlowriumExtrudedLetters />
-        </Suspense>
+        <directionalLight position={[7.5, -3, 5.5]} intensity={1.05} color="#dce8ff" />
+        <pointLight position={[-5.5, 8.5, 6.5]} intensity={1.15} color="#ffffff" />
+        <hemisphereLight args={['#f2f6ff', '#2a3028', 0.62]} />
+        <ScrollFallBridge>
+          <Suspense fallback={null}>
+            <DemandBootFrames />
+            <Environment preset="studio" environmentIntensity={1.18} resolution={128} />
+            <SoonSoonExtrudedLetters />
+          </Suspense>
+          <WaterDropletsField />
+        </ScrollFallBridge>
       </Canvas>
     </div>
   );
