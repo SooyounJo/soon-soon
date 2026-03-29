@@ -55,6 +55,25 @@ export default function Home() {
           className="landing-hero landing-hero--fixed-gravity"
           aria-label="soon-soon hero"
         >
+          <div className="landing-hero-chrome" aria-hidden="true">
+            <div className="landing-hero-chrome-top">
+              <span className="landing-hero-chrome-line">
+                flowrium — surface, glass, motion
+              </span>
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--end">
+                lab / index / experiments
+              </span>
+            </div>
+            <div className="landing-hero-chrome-bottom">
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--corner">
+                © flowrium
+              </span>
+              <span className="landing-hero-chrome-scroll">Scroll Down</span>
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--corner landing-hero-chrome-line--end">
+                digital · spatial · type
+              </span>
+            </div>
+          </div>
           <div className="landing-hero-title">
             <div className="title-overlay-inner landing-hero-title-inner">
               <div className="hero-wordmark-wrap hero-wordmark-wrap--glass-hybrid">
