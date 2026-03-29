@@ -19,8 +19,19 @@ export default function App({ Component, pageProps }) {
             height="180%"
             colorInterpolationFilters="sRGB"
           >
-            <feGaussianBlur in="SourceGraphic" stdDeviation="24 9" result="b1" />
-            <feGaussianBlur in="b1" stdDeviation="9 22" result="b2" />
+            {/* 단일 패스로 비용 절감 — 이전 이중 가우시안과 유사한 느낌은 stdDeviation 튜닝으로 맞춤 */}
+            <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
+          </filter>
+          {/* 랜딩 히어로: 초기 상태만 강하게 — 휠로 선명 레이어와 크로스페이드 */}
+          <filter
+            id="flowrium-blur-landing"
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+            colorInterpolationFilters="sRGB"
+          >
+            <feGaussianBlur in="SourceGraphic" stdDeviation="14" />
           </filter>
         </defs>
       </svg>

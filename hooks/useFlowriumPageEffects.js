@@ -36,8 +36,6 @@ export function useFlowriumPageEffects(scrollSpacerRef) {
     const applyLensVars = () => {
       root.style.setProperty('--dither-x', `${smoothX}px`);
       root.style.setProperty('--dither-y', `${smoothY}px`);
-      root.style.setProperty('--spot-fast-x', `${targetX}px`);
-      root.style.setProperty('--spot-fast-y', `${targetY}px`);
     };
 
     const tick = () => {
