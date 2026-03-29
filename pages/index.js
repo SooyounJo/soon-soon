@@ -72,6 +72,14 @@ export default function Home() {
       el.style.height = `${h}px`;
     };
 
+    /** 스크롤/유체 효과에서 querySelector 반복 방지 */
+    let letterNodes = null;
+    let wrapNodes = null;
+    const refreshDomRefs = () => {
+      letterNodes = document.querySelectorAll('.title-letter');
+      wrapNodes = document.querySelectorAll('.letter-canvas-wrap');
+    };
+
     let targetX = typeof window !== 'undefined' ? window.innerWidth / 2 : 0;
     let targetY = typeof window !== 'undefined' ? window.innerHeight / 2 : 0;
     let smoothX = targetX;
@@ -94,30 +102,39 @@ export default function Home() {
       raf = window.requestAnimationFrame(tick);
     };
 
-    const updateLetterFluid = (e) => {
-      if (reduceMotion) return;
-      const wraps = document.querySelectorAll('.letter-canvas-wrap');
-      if (!wraps.length) return;
+    let fluidRaf = 0;
+    let fluidEvent = null;
+
+    const flushLetterFluid = () => {
+      fluidRaf = 0;
+      if (reduceMotion || !fluidEvent) return;
+      const e = fluidEvent;
+      fluidEvent = null;
+      if (!wrapNodes || !wrapNodes.length) {
+        refreshDomRefs();
+        if (!wrapNodes || !wrapNodes.length) return;
+      }
       const mx = e.clientX;
       const my = e.clientY;
-      wraps.forEach((el) => {
+      for (let i = 0; i < wrapNodes.length; i++) {
+        const el = wrapNodes[i];
         const r = el.getBoundingClientRect();
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
+        const cx = r.left + r.width * 0.5;
+        const cy = r.top + r.height * 0.5;
         const dx = mx - cx;
         const dy = my - cy;
         const d = Math.hypot(dx, dy) + 90;
         const influence = Math.min(1, 400 / d);
-        const fx = (dx / d) * 16 * influence;
-        const fy = (dy / d) * 16 * influence;
-        el.style.transform = `translate3d(${fx}px, ${fy}px, 0)`;
-      });
+        const inv = 16 * influence;
+        el.style.transform = `translate3d(${(dx / d) * inv}px,${(dy / d) * inv}px,0)`;
+      }
     };
 
     const onPointerMove = (e) => {
       targetX = e.clientX;
       targetY = e.clientY;
-      updateLetterFluid(e);
+      fluidEvent = e;
+      if (!fluidRaf) fluidRaf = window.requestAnimationFrame(flushLetterFluid);
     };
 
     applyLensVars();
@@ -167,14 +184,17 @@ export default function Home() {
       const stackLift = p * centerToTop;
       root.style.setProperty('--title-stack-lift', `${-stackLift}px`);
 
-      const letters = document.querySelectorAll('.title-letter');
+      if (!letterNodes || !letterNodes.length) refreshDomRefs();
       const ramp = smoothstep(0, 0.14, p);
-      letters.forEach((el, i) => {
-        const lp = letterScrollProgress(p, i, N_LETTERS);
-        const rise = (1 - lp) * 26 * ramp;
-        const sc = 1 - 0.5 * lp;
-        el.style.transform = `translateY(${rise}px) scale(${sc})`;
-      });
+      if (letterNodes && letterNodes.length) {
+        for (let i = 0; i < letterNodes.length; i++) {
+          const el = letterNodes[i];
+          const lp = letterScrollProgress(p, i, N_LETTERS);
+          const rise = (1 - lp) * 26 * ramp;
+          const sc = 1 - 0.5 * lp;
+          el.style.transform = `translateY(${rise}px) scale(${sc})`;
+        }
+      }
     };
 
     const onScroll = () => {
@@ -184,6 +204,8 @@ export default function Home() {
     window.addEventListener('scroll', onScroll, { passive: true });
 
     const onResize = () => {
+      letterNodes = null;
+      wrapNodes = null;
       setSpacerHeight();
       syncScroll();
     };
@@ -191,12 +213,16 @@ export default function Home() {
 
     window.requestAnimationFrame(() => {
       setSpacerHeight();
+      refreshDomRefs();
       syncScroll();
     });
 
     revealTimer = window.setTimeout(() => {
       root.classList.add('hero-revealed');
-      window.requestAnimationFrame(syncScroll);
+      window.requestAnimationFrame(() => {
+        refreshDomRefs();
+        syncScroll();
+      });
     }, HERO_REVEAL_MS);
 
     return () => {
@@ -207,6 +233,9 @@ export default function Home() {
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('scroll', onScroll);
       if (scrollRaf) window.cancelAnimationFrame(scrollRaf);
+      if (fluidRaf) window.cancelAnimationFrame(fluidRaf);
+      letterNodes = null;
+      wrapNodes = null;
       root.classList.remove('flowrium-home', 'hero-revealed', 'flowrium-scroll-end');
       root.style.removeProperty('--flowrium-blur-op');
       root.style.removeProperty('--flowrium-glass-op');
@@ -226,6 +255,7 @@ export default function Home() {
         <title>Flowrium</title>
         <meta name="description" content="Next.js + WebGL canvas" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preload" href="/maingra.png" as="image" type="image/png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
@@ -241,6 +271,8 @@ export default function Home() {
               alt=""
               className="bg-flower-video bg-flower-video-blur"
               draggable={false}
+              decoding="async"
+              fetchPriority="high"
             />
             {/* 배경(블러 구역)에만 글라스 느낌 — 커서 선명 원 안은 마스크로 완전 제외 */}
             <div className="bg-glass-field bg-glass-outer-masked" aria-hidden />
@@ -249,6 +281,8 @@ export default function Home() {
               alt=""
               className="bg-flower-video bg-flower-video-sharp"
               draggable={false}
+              decoding="async"
+              fetchPriority="low"
             />
           </div>
           <div className="bg-dither bg-dither-masked bg-dither-viewport" aria-hidden />
