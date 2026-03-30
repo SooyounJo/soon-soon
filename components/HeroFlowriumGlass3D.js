@@ -13,6 +13,8 @@ import {
   Bounds,
   Center,
   Environment,
+  Html,
+  RoundedBox,
   MeshTransmissionMaterial,
   Text3D,
   useBounds,
@@ -56,6 +58,13 @@ const CIRCLE_DROPLET_COUNT = 4;
 const DROPLET_CIRCLE_R = 2.85;
 /** 원 중심의 Y (view 아래쪽) */
 const DROPLET_CIRCLE_CENTER_Y = -3.35;
+
+// 1-2) "Visual Coding" 2D 텍스트를 특정 구간에만 고정 노출
+// (초입부: 물방울 계속 + 타이포 호버 유지 → PHASE1 말미에만 매핑)
+const VISUAL_CODING_START = PHASE1_END - 0.045; // ~0.395
+
+const BUTTONS_BASE_Y = -4.35; // 화면 하단 중앙 버튼 최종 위치(월드 y)
+const BUTTONS_RISE_Y = 0.45; // 살짝 아래에서 올라오게 하는 시작 오프셋(월드 단위)
 
 /**
  * 카메라 정면과 평행한 평면 위 슬롯 [x,y,z]
@@ -201,7 +210,7 @@ function DemandBootFrames() {
   return null;
 }
 
-function RefitBoundsAfterLoad() {
+function RefitBoundsAfterLoad({ mode }) {
   const api = useBounds();
   const invalidate = useThree((s) => s.invalidate);
   useEffect(() => {
@@ -211,9 +220,9 @@ function RefitBoundsAfterLoad() {
       invalidate();
     };
     run();
-    const ids = [80, 240, 600, 1200].map((ms) => window.setTimeout(run, ms));
+    const ids = [80, 240, 600].map((ms) => window.setTimeout(run, ms));
     return () => ids.forEach((id) => window.clearTimeout(id));
-  }, [api, invalidate]);
+  }, [api, invalidate, mode]);
   return null;
 }
 
@@ -225,13 +234,13 @@ function DropletMaterial() {
       backsideThickness={0.055}
       backsideEnvMapIntensity={0.82}
       samples={2}
-      resolution={128}
+      resolution={112}
       transmission={1}
       thickness={0.11}
-      roughness={0.028}
+      roughness={0.034}
       metalness={0.015}
       chromaticAberration={0.05}
-      anisotropicBlur={0.06}
+      anisotropicBlur={0.078}
       distortion={0.12}
       distortionScale={0.26}
       temporalDistortion={0.012}
@@ -249,17 +258,17 @@ function GlassTransmission() {
       backside
       backsideThickness={0.055}
       backsideEnvMapIntensity={0.9}
-      samples={4}
-      resolution={256}
+      samples={3}
+      resolution={192}
       transmission={1}
       thickness={0.075}
-      roughness={0.032}
+      roughness={0.038}
       metalness={0.04}
-      chromaticAberration={0.1}
-      anisotropicBlur={0.06}
+      chromaticAberration={0.086}
+      anisotropicBlur={0.078}
       distortion={0.16}
       distortionScale={0.35}
-      temporalDistortion={0.02}
+      temporalDistortion={0.014}
       ior={1.52}
       color="#ffffff"
       background={GLASS_CAPTURE_BG}
@@ -361,8 +370,6 @@ function ExtrudedLetter({ char, position, font, letterKey, floatPhase = 0, mode 
         m.position.z = THREE.MathUtils.lerp(m.position.z, target.current.z * hover, k);
       }
     }
-
-    invalidate();
   });
 
   const onHover = () => {
@@ -490,8 +497,6 @@ function WaterDropletsField() {
 
       mesh.visible = !(p >= PHASE1_END && i < CIRCLE_DROPLET_COUNT && e2 > 0.22);
     }
-
-    invalidate();
   });
 
   return (
@@ -522,7 +527,7 @@ function WaterDropletsField() {
             invalidate();
           }}
         >
-          <sphereGeometry args={[o.r, 32, 32]} />
+          <sphereGeometry args={[o.r, 28, 28]} />
           <DropletMaterial />
         </mesh>
       ))}
@@ -555,7 +560,6 @@ function NavOrbitCluster() {
       rootRef.current.visible = reveal > 0.02;
       rootRef.current.scale.setScalar(Math.max(0.001, reveal));
     }
-    invalidate();
   });
 
   const go =
@@ -589,12 +593,12 @@ function NavOrbitCluster() {
                 height={NAV_EXTRUDE}
                 letterSpacing={0}
                 lineHeight={1}
-                curveSegments={8}
+                curveSegments={10}
                 bevelEnabled
                 bevelThickness={0.024}
                 bevelSize={0.02}
                 bevelOffset={0}
-                bevelSegments={3}
+                bevelSegments={4}
                 {...hoverProps}
                 onClick={go(item.path)}
               >
@@ -616,6 +620,10 @@ function ScrollFallBridge({ children }) {
   const invalidate = useThree((s) => s.invalidate);
   const camera = useThree((s) => s.camera);
   const baseCam = useRef(/** @type {{ x: number; y: number; z: number } | null} */ (null));
+  const stageRef = useRef(0); // 0: pre, 1: coding snap, 2: view snap
+
+  const CODING_SNAP_P = VISUAL_CODING_START + 0.03; // stage1 고정 진행값(오버레이가 완전 표시되도록)
+  const VIEW_SNAP_P = 0.92; // stage2 고정 진행값
 
   useLayoutEffect(() => {
     baseCam.current = {
@@ -629,16 +637,54 @@ function ScrollFallBridge({ children }) {
     const onScroll = () => {
       const el = document.documentElement;
       const maxScroll = Math.max(1, el.scrollHeight - window.innerHeight);
-      target.current = Math.min(1, window.scrollY / maxScroll);
+      const rawP = Math.min(1, window.scrollY / maxScroll);
+      target.current = rawP;
+      // demand frameloop: 스크롤로 진행이 바뀌면 즉시 1프레임 렌더
+      invalidate();
     };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [invalidate]);
 
-  useFrame((_, delta) => {
-    const k = 1 - Math.exp(-13 * delta);
-    smooth.current += (target.current - smooth.current) * k;
+  const wheelLockRef = useRef(0);
+  useEffect(() => {
+    const onWheel = (e) => {
+      if (!e.deltaY) return;
+      const now = performance.now();
+      if (now - wheelLockRef.current < 180) return;
+      wheelLockRef.current = now;
+
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const cur = stageRef.current;
+      let next = cur;
+      if (dir > 0) next = cur === 0 ? 1 : cur === 1 ? 2 : 2;
+      else next = cur === 2 ? 1 : cur === 1 ? 0 : 0;
+
+      if (next !== cur) {
+        stageRef.current = next;
+        smooth.current =
+          next === 0 ? target.current : next === 1 ? CODING_SNAP_P : VIEW_SNAP_P;
+        invalidate();
+      }
+    };
+    window.addEventListener('wheel', onWheel, { passive: true });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [invalidate, CODING_SNAP_P, VIEW_SNAP_P]);
+
+  useFrame((state, delta) => {
+    const rawP = target.current;
+
+    if (stageRef.current === 0) {
+      // stage0: 스크롤에 맞춰 자연스럽게
+      const k = 1 - Math.exp(-13 * delta);
+      smooth.current += (rawP - smooth.current) * k;
+    } else {
+      // stage1/2: 스냅 고정(추가 스무딩 없음)
+      smooth.current =
+        stageRef.current === 1 ? CODING_SNAP_P : VIEW_SNAP_P;
+    }
+
     const p = smooth.current;
     const e1 = scrollPhase1Ease(p);
     const e2 = scrollPhase2Ease(p);
@@ -650,7 +696,9 @@ function ScrollFallBridge({ children }) {
       camera.position.y = b.y - CAMERA_FOLLOW_Y * followBlend;
       camera.position.z = b.z;
     }
-    invalidate();
+    // stage 0/1에서는 물방울/호버/오버레이를 계속 업데이트해야 합니다.
+    // stage 2에서는 "스냅" 상태로 멈춰있게(필요할 때만 onScroll/hover가 invalidate).
+    if (stageRef.current !== 2) invalidate();
   });
 
   return (
@@ -667,7 +715,6 @@ const TEXT_TILT_RY = -0.05;
 function ViewScrollFacingGroup({ children }) {
   const scrollRef = useContext(ScrollFallContext);
   const groupRef = useRef(null);
-  const invalidate = useThree((s) => s.invalidate);
 
   useFrame(() => {
     const p = scrollRef.current;
@@ -679,10 +726,204 @@ function ViewScrollFacingGroup({ children }) {
     if (groupRef.current) {
       groupRef.current.rotation.set(rx, ry, 0);
     }
-    invalidate();
   });
 
   return <group ref={groupRef}>{children}</group>;
+}
+
+/**
+ * 1) 특정 스크롤 구간: 중앙 2D 텍스트(Visual Coding) 매핑
+ * 2) 다음 스크롤 구간(view): 아래 4개 글래스 모피즘 카드 노출
+ * - view의 유리 3D 타이포는 그대로 유지
+ * - 기존 orbit 3D 네비는 제거
+ */
+function ScrollMappedOverlays() {
+  const scrollRef = useContext(ScrollFallContext);
+  const codingRef = useRef(null);
+  const invalidate = useThree((s) => s.invalidate);
+
+  useFrame(() => {
+    const p = scrollRef.current;
+    const showCoding = p >= VISUAL_CODING_START && p < PHASE1_END;
+
+    if (!codingRef.current) return;
+
+    const t = THREE.MathUtils.smoothstep(
+      VISUAL_CODING_START,
+      VISUAL_CODING_START + 0.03,
+      p
+    );
+    const opacity = showCoding ? t : 0;
+    const y = (1 - t) * 4; // fullscreen 기준이라 이동량 줄임
+    codingRef.current.style.opacity = String(opacity);
+    codingRef.current.style.transform = `translate3d(0, ${y}px, 0)`;
+
+    // demand frameloop: DOM 애니메이션이 끊기지 않게 1프레임 보정
+    if (showCoding) invalidate();
+  });
+
+  return (
+    <>
+      <Html fullscreen center style={{ pointerEvents: 'none' }}>
+        <div
+          ref={codingRef}
+          className="scroll-mapped-visualcoding bagel-fat-one-regular"
+        >
+          비주얼코딩
+        </div>
+      </Html>
+      <ScrollGlassButtons />
+    </>
+  );
+}
+
+function GlassButton({
+  label,
+  font,
+  position,
+  onClick,
+  w = 2.4,
+  h = 0.42,
+  d = 0.16,
+  r = 0.24,
+}) {
+  const meshRef = useRef(null);
+  const hoverRef = useRef(0);
+  const invalidate = useThree((s) => s.invalidate);
+
+  useFrame((state, delta) => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const k = Math.min(delta * 10, 1);
+    const targetScale = 1 + hoverRef.current * 0.03;
+    const s = mesh.scale;
+    s.setScalar(THREE.MathUtils.lerp(s.x, targetScale, k));
+  });
+
+  const onOver = () => {
+    hoverRef.current = 1;
+    document.body.style.cursor = 'pointer';
+    invalidate();
+  };
+
+  const onOut = () => {
+    hoverRef.current = 0;
+    document.body.style.cursor = '';
+    invalidate();
+  };
+
+  return (
+    <group
+      position={position}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        onOver();
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation();
+        onOut();
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
+    >
+      <mesh
+        ref={meshRef}
+        castShadow={false}
+        receiveShadow={false}
+      >
+        <RoundedBox args={[w, h, d]} radius={r} smoothness={6} bevelSegments={2} steps={1} />
+        <MeshTransmissionMaterial
+          backside
+          backsideThickness={0.05}
+          backsideEnvMapIntensity={0.62}
+          samples={2}
+          resolution={96}
+          transmission={0.85}
+          thickness={0.06}
+          roughness={0.085}
+          metalness={0.02}
+          chromaticAberration={0.04}
+          anisotropicBlur={0.075}
+          distortion={0.09}
+          distortionScale={0.22}
+          temporalDistortion={0.008}
+          ior={1.52}
+          color="#f6fbff"
+          background={GLASS_CAPTURE_BG}
+          envMapIntensity={0.9}
+        />
+      </mesh>
+      <Text3D
+        font={font}
+        size={0.36}
+        height={0.0015}
+        letterSpacing={0}
+        lineHeight={1}
+        bevelEnabled={false}
+        curveSegments={6}
+        bevelThickness={0}
+        bevelSize={0}
+        bevelOffset={0}
+        bevelSegments={0}
+        position={[0, 0, d * 0.45]}
+      >
+        {label}
+      </Text3D>
+    </group>
+  );
+}
+
+function ScrollGlassButtons() {
+  const scrollRef = useContext(ScrollFallContext);
+  const router = useRouter();
+  const invalidate = useThree((s) => s.invalidate);
+  const fontData = useLoader(TTFLoader, BAGEL_TTF);
+  const rootRef = useRef(null);
+  const lastShowRef = useRef(false);
+
+  const items = useMemo(
+    () => [
+      { label: '2D', path: '/2d', x: -1.75, yOff: 0, z: 0 },
+      { label: '3D', path: '/3d', x: 1.75, yOff: 0, z: 0 },
+      { label: 'VID', path: '/vid', x: -1.75, yOff: -0.82, z: 0 },
+      { label: 'OBJ', path: '/obj', x: 1.75, yOff: -0.82, z: 0 },
+    ],
+    []
+  );
+
+  useFrame(() => {
+    const p = scrollRef.current;
+    const showButtons = p >= PHASE1_END;
+    const root = rootRef.current;
+    if (!root) return;
+
+    root.visible = showButtons;
+    const e2 = scrollPhase2Ease(p);
+    const t = THREE.MathUtils.clamp((e2 - 0.02) / 0.25, 0, 1);
+    const y = THREE.MathUtils.lerp(BUTTONS_BASE_Y - BUTTONS_RISE_Y, BUTTONS_BASE_Y, t);
+    root.position.y = y;
+    root.scale.setScalar(0.99 + 0.01 * t);
+    if (showButtons !== lastShowRef.current) {
+      lastShowRef.current = showButtons;
+      invalidate();
+    }
+  });
+
+  return (
+    <group ref={rootRef} visible={false}>
+      {items.map((item) => (
+        <GlassButton
+          key={item.path}
+          label={item.label}
+          font={fontData}
+          position={[item.x, item.yOff, item.z]}
+          onClick={() => router.push(item.path)}
+        />
+      ))}
+    </group>
+  );
 }
 
 /** 궤도 영역을 bounds에 넣기 위한 보이지 않는 구 반지름 */
@@ -754,7 +995,11 @@ function HeroViewBlock() {
   const modeRef = useRef('soon');
 
   useFrame(() => {
-    const want = scrollRef.current >= PHASE1_END ? 'view' : 'soon';
+    // 스테이지1/2 스냅값 기준으로만 모드를 전환:
+    // stage1(coding)에서는 p가 낮게 고정되고, stage2(view)는 p가 크게 점프하므로
+    // 중간 스크롤에서 줌/fit이 반복되는 걸 막습니다.
+    const p = scrollRef.current;
+    const want = p >= 0.86 ? 'view' : 'soon';
     if (want !== modeRef.current) {
       modeRef.current = want;
       setMode(want);
@@ -764,17 +1009,15 @@ function HeroViewBlock() {
   return (
     <ViewScrollFacingGroup>
       <Bounds
-        key={mode}
         fit
         clip={false}
         observe={false}
         margin={mode === 'view' ? 2.05 : 2.1}
         maxDuration={0.28}
       >
-        <RefitBoundsAfterLoad />
+        <RefitBoundsAfterLoad mode={mode} />
         <OrbitBoundsPadding />
         <PhaseTypography mode={mode} />
-        <NavOrbitCluster />
       </Bounds>
     </ViewScrollFacingGroup>
   );
@@ -801,7 +1044,7 @@ export default function HeroFlowriumGlass3D() {
           powerPreference: 'high-performance',
           stencil: false,
         }}
-        dpr={[1, 1.35]}
+        dpr={[1, 1.22]}
         onCreated={({ gl, invalidate }) => {
           gl.setClearColor(SCENE_CLEAR_HEX, 1);
           gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -826,6 +1069,7 @@ export default function HeroFlowriumGlass3D() {
             <Environment preset="studio" environmentIntensity={1.18} resolution={128} />
             <HeroViewBlock />
           </Suspense>
+          <ScrollMappedOverlays />
           <WaterDropletsField />
         </ScrollFallBridge>
       </Canvas>

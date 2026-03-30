@@ -438,3 +438,20 @@ main.page-landing.page-landing--scroll-gravity {
   transform: none;
   pointer-events: auto;
 }
+
+/* Scroll-mapped 2D overlays + glass morphism cards */
+.scroll-mapped-visualcoding {
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(28px, 5vw, 64px);
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-align: center;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.35),
+    0 10px 42px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+  transition: opacity 120ms ease;
+  pointer-events: none;
+}
