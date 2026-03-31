@@ -75,15 +75,12 @@
   font-size: 0.88rem;
 }
 
-/* 풀블리드 이미지 카드 (Lab 등) — 패딩 제거, 본문은 이미지 안 타이포에 맡김 */
+/* 이미지 카드 — contain 으로 크롭 없음; 배경은 기본 .card 글래스 유지(블러 살림) */
 .card--media {
-  padding: 0;
+  padding: clamp(0.55rem, 1.6vw, 0.95rem);
   overflow: hidden;
   justify-content: stretch;
   align-items: stretch;
-  background: #000000;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 .card--media .card__figure {
@@ -99,7 +96,7 @@
 .card--media .card__img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
   user-select: none;
@@ -162,12 +159,3 @@
     0 16px 48px rgba(0, 0, 0, 0.38);
 }
 
-/* Multi + 이미지 카드: 위 글래스 베이스보다 풀블리드 이미지 우선 */
-.card-swap-container--multi .card.card--media {
-  background: #000000;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 16px 48px rgba(0, 0, 0, 0.42);
-}
