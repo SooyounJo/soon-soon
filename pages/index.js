@@ -1,21 +1,25 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import Head from 'next/head';
+import CircularText from '../components/CircularText';
+import GlassCursorOverlay from '../components/GlassCursorOverlay';
+import LandingGlassDockNav from '../components/LandingGlassDockNav';
+import scrollLandingToView from '../utils/scrollLandingToView';
 
-const GlassCursorOverlay = dynamic(
-  () => import('../components/GlassCursorOverlay'),
-  { ssr: false }
-);
+/** HeroFlowriumGlass3D PHASE1_END 와 동기 */
+const LANDING_GLASS_NAV_AFTER = 0.44;
+const RETURN_TO_VIEW_KEY = 'flowrium:return-to-view';
 
 const HeroFlowriumGlass3D = dynamic(() => import('../components/HeroFlowriumGlass3D'), {
   ssr: false,
 });
 
-const GradientText = dynamic(() => import('../components/GradientText'), { ssr: false });
-
 export default function Home() {
   const [isHeroReady, setIsHeroReady] = useState(false);
   const [showEntryLoader, setShowEntryLoader] = useState(true);
+  const [isLoaderLeaving, setIsLoaderLeaving] = useState(false);
+  const [loaderStartedAt, setLoaderStartedAt] = useState(() => Date.now());
+  const [showGlassNav, setShowGlassNav] = useState(false);
 
   const handleHeroReady = useCallback(() => {
     setIsHeroReady(true);
@@ -46,17 +50,82 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!isHeroReady) return;
-    const id = window.setTimeout(() => setShowEntryLoader(false), 520);
-    return () => window.clearTimeout(id);
-  }, [isHeroReady]);
+    // 랜딩 진입 시 스크롤 복원으로 중간 프레임에서 시작되는 현상 방지
+    const prev = window.history.scrollRestoration;
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    let shouldRestoreView = false;
+    try {
+      shouldRestoreView = window.sessionStorage.getItem(RETURN_TO_VIEW_KEY) === '1';
+      if (shouldRestoreView) {
+        window.sessionStorage.removeItem(RETURN_TO_VIEW_KEY);
+      }
+    } catch (_) {
+      shouldRestoreView = false;
+    }
+
+    const navEntry =
+      typeof window.performance?.getEntriesByType === 'function'
+        ? window.performance.getEntriesByType('navigation')[0]
+        : null;
+    const isBackForward = Boolean(navEntry && navEntry.type === 'back_forward');
+
+    if (isBackForward && shouldRestoreView) {
+      requestAnimationFrame(() => {
+        scrollLandingToView({ behavior: 'auto' });
+      });
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+    return () => {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = prev;
+      }
+    };
+  }, []);
 
   useEffect(() => {
-    const failSafe = window.setTimeout(() => {
+    if (!isHeroReady) return;
+    const elapsed = Date.now() - loaderStartedAt;
+    const remain = Math.max(0, 4000 - elapsed);
+    const leaveId = window.setTimeout(() => {
+      setIsLoaderLeaving(true);
+    }, remain);
+    const hideId = window.setTimeout(() => {
       setShowEntryLoader(false);
-    }, 9000);
-    return () => window.clearTimeout(failSafe);
+      setIsLoaderLeaving(false);
+    }, remain + 560);
+    return () => {
+      window.clearTimeout(leaveId);
+      window.clearTimeout(hideId);
+    };
+  }, [isHeroReady, loaderStartedAt]);
+
+  useEffect(() => {
+    const onResize = () => {
+      document
+        .querySelector('.hero-flowrium-glass-shell')
+        ?.classList.remove('hero-flowrium-webgl-text-ready');
+      setIsHeroReady(false);
+      setShowEntryLoader(true);
+      setIsLoaderLeaving(false);
+      setLoaderStartedAt(Date.now());
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const p = window.scrollY / maxScroll;
+      setShowGlassNav(isHeroReady && p >= LANDING_GLASS_NAV_AFTER);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isHeroReady]);
 
   return (
     <>
@@ -74,13 +143,15 @@ export default function Home() {
       <GlassCursorOverlay />
       {showEntryLoader ? (
         <div
-          className={`flowrium-entry-loader${isHeroReady ? ' flowrium-entry-loader--leave' : ''}`}
+          className={`flowrium-entry-loader${isLoaderLeaving ? ' flowrium-entry-loader--leave' : ''}`}
           aria-hidden
         >
-          <div className="flowrium-entry-loader-wordmark bagel-fat-one-regular">
-            <span className="flowrium-entry-loader-line">soon</span>
-            <span className="flowrium-entry-loader-dash">-</span>
-            <span className="flowrium-entry-loader-line">soon</span>
+          <div className="flowrium-entry-loader-inner">
+            <CircularText
+              text="soon-soon-soon-soon-"
+              spinDuration={12}
+              className="flowrium-entry-loader-circular"
+            />
           </div>
         </div>
       ) : null}
@@ -91,29 +162,33 @@ export default function Home() {
         >
           <div className="landing-hero-chrome" aria-hidden="true">
             <div className="landing-hero-chrome-top">
-              <span className="landing-hero-chrome-line">
-                flowrium — surface, glass, motion
-              </span>
-              <span className="landing-hero-chrome-line landing-hero-chrome-line--end">
-                lab / index / experiments
+              <button
+                type="button"
+                className="landing-hero-chrome-line landing-hero-chrome-line--scroll-trigger landing-hero-chrome-line--wobble landing-hero-chrome-line--menu"
+                title="Scroll to view"
+                onClick={scrollLandingToView}
+              >
+                Menu
+              </button>
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--end landing-hero-chrome-line--wobble">
+                dus10167@gmail.com
+                <br />
+                dus10167@naver.com
               </span>
             </div>
             <div className="landing-hero-chrome-bottom">
-              <span className="landing-hero-chrome-line landing-hero-chrome-line--corner">
-                © flowrium
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--corner landing-hero-chrome-line--wobble">
+                Archive
+                <br />
+                2024-2026
               </span>
-              <span className="landing-hero-chrome-scroll landing-hero-chrome-scroll-hint-wrap">
-                <GradientText
-                  colors={['#22C55E', '#4ADE80', '#86EFAC']}
-                  animationSpeed={8}
-                  showBorder={false}
-                  className="landing-hero-chrome-scroll--gradient"
-                >
-                  Scroll Down
-                </GradientText>
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--center landing-hero-chrome-line--wobble-center">
+                SooYoun Jo
               </span>
-              <span className="landing-hero-chrome-line landing-hero-chrome-line--corner landing-hero-chrome-line--end">
-                digital · spatial · type
+              <span className="landing-hero-chrome-line landing-hero-chrome-line--corner landing-hero-chrome-line--end landing-hero-chrome-line--wobble">
+                Code &amp; Tech Design
+                <br />
+                UI &amp; UX Design
               </span>
             </div>
           </div>
@@ -137,6 +212,7 @@ export default function Home() {
           </div>
         </section>
         <div className="landing-scroll-spacer" aria-hidden="true" />
+        <LandingGlassDockNav visible={showGlassNav} />
       </main>
       <style jsx>{`
         .page {

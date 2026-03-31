@@ -1,4 +1,5 @@
 import '../styles/globals.css';
+import '../components/CardSwap.css';
 
 export default function App({ Component, pageProps }) {
   return (
