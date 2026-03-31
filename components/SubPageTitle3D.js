@@ -15,33 +15,20 @@ const BEVEL_SIZE = 0.054;
 const BEVEL_SEGMENTS = 3;
 const CURVE_SEGMENTS = 6;
 
-/** ExtrudedLetter `GlassTransmission` 과 동일 */
-function GlassTransmission() {
-  return (
-    <meshPhysicalMaterial
-      transparent
-      transmission={0.94}
-      thickness={0.12}
-      roughness={0.028}
-      metalness={0.03}
-      ior={1.52}
-      color="#fafcff"
-      envMapIntensity={1.65}
-      emissive="#f0f4ff"
-      emissiveIntensity={0.24}
-      attenuationColor="#ffffff"
-      attenuationDistance={0.52}
-      clearcoat={0.55}
-      clearcoatRoughness={0.09}
-    />
-  );
+const SCENE_BG = '#000000';
+
+/** 네비용 `>Who` 등 → 3D에는 `>` 제외 */
+function titleFor3D(raw) {
+  if (!raw) return '';
+  return raw.replace(/^>\s*/, '').trim();
 }
 
-function SceneTransparentClear() {
+/** Hero `SceneSolidBackdrop` 와 동일 — transmission 재질이 투명 배경에선 회색으로 죽으므로 검정 필수 */
+function SceneSolidBackdrop() {
   const scene = useThree((s) => s.scene);
   const invalidate = useThree((s) => s.invalidate);
   useLayoutEffect(() => {
-    scene.background = null;
+    scene.background = new THREE.Color(SCENE_BG);
     invalidate();
     return () => {
       scene.background = null;
@@ -50,11 +37,31 @@ function SceneTransparentClear() {
   return null;
 }
 
+const GLASS_BASE = {
+  transparent: true,
+  transmission: 0.94,
+  thickness: 0.12,
+  roughness: 0.028,
+  metalness: 0.03,
+  ior: 1.52,
+  color: '#fafcff',
+  envMapIntensity: 1.65,
+  emissive: '#f0f4ff',
+  emissiveIntensity: 0.24,
+  attenuationColor: '#ffffff',
+  attenuationDistance: 0.52,
+  clearcoat: 0.55,
+  clearcoatRoughness: 0.09,
+};
+
 /**
- * Hero ExtrudedLetter mode=view, 스크롤 끝(e2=1, assemble=0) 일 때와 같은 부유·회전식.
+ * Hero ExtrudedLetter mode=view 부유 + 포인터 호버 시 살짝 커지고 하이라이트(히어로 타이포와 유사).
  */
 function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
   const groupRef = useRef(null);
+  const matRef = useRef(/** @type {THREE.MeshPhysicalMaterial | null} */ (null));
+  const hoverTarget = useRef(0);
+  const hoverSmoothed = useRef(0);
   const extrudeScale = textSize / TEXT_SIZE_BASE;
   const floatPhase = useMemo(() => {
     let h = 2166136261;
@@ -65,12 +72,41 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
     return ((h >>> 0) % 10000) / 10000;
   }, [text]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const g = groupRef.current;
+    const mat = matRef.current;
     if (!g) return;
+
+    if (!reduceMotion) {
+      hoverSmoothed.current = THREE.MathUtils.damp(
+        hoverSmoothed.current,
+        hoverTarget.current,
+        10,
+        delta
+      );
+    } else {
+      hoverSmoothed.current = 0;
+    }
+    const h = hoverSmoothed.current;
+
+    if (mat) {
+      mat.envMapIntensity = GLASS_BASE.envMapIntensity + h * 0.28;
+      mat.emissiveIntensity = GLASS_BASE.emissiveIntensity + h * 0.26;
+      mat.clearcoat = GLASS_BASE.clearcoat + h * 0.12;
+    }
+
+    const scaleBoost = 1 + h * 0.045;
+    g.scale.setScalar(scaleBoost);
+
     if (reduceMotion) {
       g.position.set(0, 0, 0);
       g.rotation.set(0, 0, 0);
+      g.scale.setScalar(1);
+      if (mat) {
+        mat.envMapIntensity = GLASS_BASE.envMapIntensity;
+        mat.emissiveIntensity = GLASS_BASE.emissiveIntensity;
+        mat.clearcoat = GLASS_BASE.clearcoat;
+      }
       return;
     }
     const t = state.clock.elapsedTime;
@@ -93,17 +129,27 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
     const ryIdle = Math.cos(t * 0.66 + a * 1.3) * 0.045 * breath;
     const rzIdle = Math.sin(t * 0.52 + a * 0.77) * 0.038 * breath;
 
+    const hz = h * 0.06;
     g.position.set(
       fx * settle * floatDamp,
       fy * settle * floatDamp,
-      fz * settle * floatDamp
+      fz * settle * floatDamp + hz
     );
     g.rotation.set(
-      assemble * 0 + rxIdle,
-      assemble * 0 + ryIdle,
+      assemble * 0 + rxIdle + h * 0.04,
+      assemble * 0 + ryIdle - h * 0.035,
       assemble * 0 + rzIdle
     );
   });
+
+  const onPointerOver = (e) => {
+    e.stopPropagation();
+    hoverTarget.current = 1;
+  };
+  const onPointerOut = (e) => {
+    e.stopPropagation();
+    hoverTarget.current = 0;
+  };
 
   return (
     <group ref={groupRef}>
@@ -120,9 +166,27 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
           bevelSize={BEVEL_SIZE * extrudeScale}
           bevelOffset={0}
           bevelSegments={BEVEL_SEGMENTS}
+          onPointerOver={reduceMotion ? undefined : onPointerOver}
+          onPointerOut={reduceMotion ? undefined : onPointerOut}
         >
           {text}
-          <GlassTransmission />
+          <meshPhysicalMaterial
+            ref={matRef}
+            transparent={GLASS_BASE.transparent}
+            transmission={GLASS_BASE.transmission}
+            thickness={GLASS_BASE.thickness}
+            roughness={GLASS_BASE.roughness}
+            metalness={GLASS_BASE.metalness}
+            ior={GLASS_BASE.ior}
+            color={GLASS_BASE.color}
+            envMapIntensity={GLASS_BASE.envMapIntensity}
+            emissive={GLASS_BASE.emissive}
+            emissiveIntensity={GLASS_BASE.emissiveIntensity}
+            attenuationColor={GLASS_BASE.attenuationColor}
+            attenuationDistance={GLASS_BASE.attenuationDistance}
+            clearcoat={GLASS_BASE.clearcoat}
+            clearcoatRoughness={GLASS_BASE.clearcoatRoughness}
+          />
         </Text3D>
       </Center>
     </group>
@@ -142,16 +206,17 @@ function SubPageTitleScene({ text }) {
     return () => mq.removeEventListener('change', apply);
   }, []);
 
-  /** view 한 단어(3.52) 기준으로 길이에 비례 축소 — 짧은 타이틀은 view 에 가깝게 */
+  /** view 비율 유지 후 2배 스케일 — 카메라 z 를 당겨 프레이밍 맞춤 */
   const textSize = useMemo(() => {
     const len = Math.max(4, text.length);
     const fromView = (TEXT_SIZE_VIEW * 4) / len;
-    return Math.min(TEXT_SIZE_VIEW * 1.02, Math.max(1.35, fromView));
+    const base = Math.min(TEXT_SIZE_VIEW * 1.02, Math.max(1.35, fromView));
+    return base * 2;
   }, [text]);
 
   return (
     <>
-      <SceneTransparentClear />
+      <SceneSolidBackdrop />
       <ambientLight intensity={0.42} />
       <directionalLight
         position={[-9, 11, 6]}
@@ -181,10 +246,12 @@ function SubPageTitleScene({ text }) {
 }
 
 /**
- * 서브페이지 좌측 중앙 — 히어로 `view`(PhaseTypography view)와 동일 조명·머티리얼·톤매핑.
+ * 서브페이지 3D 타이틀 — 히어로 `view`와 동일 씬 배경(#000)·조명·GlassTransmission·톤매핑.
+ * (투명 캔버스는 physical transmission 이 화면 밖을 굴절할 때 회색/무광처럼 보임)
  */
 export default function SubPageTitle3D({ text }) {
-  if (!text) return null;
+  const meshText = titleFor3D(text);
+  if (!meshText) return null;
 
   return (
     <WebGLSceneBoundary fallback={null}>
@@ -192,9 +259,9 @@ export default function SubPageTitle3D({ text }) {
         className="page-sub__title-3d-canvas"
         frameloop="always"
         resize={{ debounce: 120, scroll: false }}
-        camera={{ position: [0, 0.06, 10.35], fov: 44 }}
+        camera={{ position: [0, 0.06, 14.25], fov: 44 }}
         gl={{
-          alpha: true,
+          alpha: false,
           antialias: true,
           powerPreference: 'high-performance',
           stencil: false,
@@ -202,14 +269,14 @@ export default function SubPageTitle3D({ text }) {
         }}
         dpr={1}
         onCreated={({ gl, invalidate }) => {
-          gl.setClearColor(0x000000, 0);
+          gl.setClearColor(0x000000, 1);
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.45;
           invalidate();
         }}
       >
         <Suspense fallback={null}>
-          <SubPageTitleScene text={text} />
+          <SubPageTitleScene text={meshText} />
         </Suspense>
       </Canvas>
     </WebGLSceneBoundary>

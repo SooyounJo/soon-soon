@@ -788,7 +788,7 @@ const NAV_EXTRUDE = 0.25;
 
 const NAV_ORBIT_ITEMS = [
   { label: '2d', path: '/2d' },
-  { label: '3d', path: '/3d' },
+  { label: 'Lab', path: '/lab' },
   { label: 'VID', path: '/vid' },
   { label: 'OBJ', path: '/obj' },
 ];

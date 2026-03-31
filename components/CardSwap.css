@@ -27,12 +27,20 @@
   top: 50%;
   left: 50%;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(20px) saturate(130%);
-  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  /* 어두운 단색 대신 미스트: backdrop 실패 시에도 완전 블랙 덩어리로 안 보이게 */
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.04) 52%,
+      rgba(255, 255, 255, 0.1) 100%
+    ),
+    rgba(6, 8, 12, 0.26);
+  backdrop-filter: blur(22px) saturate(132%);
+  -webkit-backdrop-filter: blur(22px) saturate(132%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
     0 12px 40px rgba(0, 0, 0, 0.35);
   padding: clamp(1.25rem, 3vw, 1.75rem);
   box-sizing: border-box;
@@ -67,13 +75,50 @@
   font-size: 0.88rem;
 }
 
+/* 풀블리드 이미지 카드 (Lab 등) — 패딩 제거, 본문은 이미지 안 타이포에 맡김 */
+.card--media {
+  padding: 0;
+  overflow: hidden;
+  justify-content: stretch;
+  align-items: stretch;
+  background: #000000;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.card--media .card__figure {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card--media .card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   .card-swap-container:not(.card-swap-container--flowrium) {
     transform: scale(0.75) translate(25%, 25%);
   }
 
+  /*
+   * scale(0.88) 제거 — 조상 transform 이 backdrop-filter(WebGL 뒤)를 망가뜨림.
+   * 크기는 width/height 로만 줄임 (!important 로 인라인 덮음).
+   */
   .card-swap-container--flowrium {
-    transform: scale(0.88);
+    transform: none;
+    width: min(545px, 92vw) !important;
+    height: min(563px, 72vh) !important;
   }
 }
 
@@ -83,6 +128,46 @@
   }
 
   .card-swap-container--flowrium {
-    transform: scale(0.78);
+    transform: none;
+    width: min(484px, 94vw) !important;
+    height: min(499px, 68vh) !important;
   }
+
+  .card-swap-container--flowrium.card-swap-container--multi {
+    width: min(500px, 94vw) !important;
+    height: min(510px, 70vh) !important;
+  }
+}
+
+/* >Multi 두 카드 — 스큐 강화 + 밝은 유리 카드(레퍼런스: 틸트된 듀얼 패널) */
+.card-swap-container--multi {
+  perspective: 1100px;
+}
+
+.card-swap-container--multi .card {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(
+      168deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.06) 48%,
+      rgba(255, 255, 255, 0.14) 100%
+    ),
+    rgba(6, 8, 14, 0.38);
+  backdrop-filter: blur(22px) saturate(132%);
+  -webkit-backdrop-filter: blur(22px) saturate(132%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 16px 48px rgba(0, 0, 0, 0.38);
+}
+
+/* Multi + 이미지 카드: 위 글래스 베이스보다 풀블리드 이미지 우선 */
+.card-swap-container--multi .card.card--media {
+  background: #000000;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 48px rgba(0, 0, 0, 0.42);
 }

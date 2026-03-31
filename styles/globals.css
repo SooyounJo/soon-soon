@@ -510,7 +510,10 @@ main.page-landing.page-landing--scroll-gravity {
   pointer-events: none;
 }
 
-/* view 구간 이후: 하단 유리 캡슐 — rotate 는 __btn 과 backdrop-filter 동일 요소(조상 transform 금지) */
+/*
+ * 하단 캡슐 — Chromium: 조상·자기 자신에 opacity<1 이면 backdrop-filter 가 WebGL 뒤를 못 보고 회색빛.
+ * → 도크·버튼 모두 opacity 페이드 금지(슬라이드+visibility 만). 등장 애니도 opacity 쓰지 않음.
+ */
 .landing-glass-dock {
   position: fixed;
   left: 0;
@@ -526,43 +529,32 @@ main.page-landing.page-landing--scroll-gravity {
   overflow-x: visible;
   overflow-y: visible;
   pointer-events: none;
-  opacity: 0;
   visibility: hidden;
-  will-change: bottom, opacity;
+  will-change: bottom;
   transition:
     bottom 0.82s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
     visibility 0s linear 0.5s;
 }
 
 .landing-glass-dock--visible {
   bottom: 0;
   pointer-events: auto;
-  opacity: 1;
   visibility: visible;
   transition:
     bottom 0.82s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
     visibility 0s linear 0s;
 }
 
-/*
- * Figma Group 1410167516
- * position absolute · width 1963.88 · height 615 · left -20.76 · top 742
- * → 뷰포트에선 너비·높이·좌측 오프셋만 반영(top 742는 고정 하단 독에서 min-height 615로 밴드 확보)
- */
+/* 레일: 가로 한 줄이 아니라 위2·아래3 벽돌(.landing-glass-dock__brick) */
 .landing-glass-dock__rail {
   position: relative;
   box-sizing: border-box;
   display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: clamp(6px, 1.2vw, 18px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
   width: min(1963.88px, calc(100vw - 24px));
-  min-height: clamp(280px, 42vmin, 615px);
-  /* transform 금지(자식 backdrop-filter). 우측으로는 left/margin 으로만 이동 */
+  min-height: clamp(220px, 38vmin, 520px);
   left: clamp(12px, 3vw, 56px);
   margin-left: auto;
   margin-right: auto;
@@ -574,14 +566,60 @@ main.page-landing.page-landing--scroll-gravity {
   transform: none;
 }
 
+/*
+ * 6열 그리드: 아래 줄 각 캡슐이 2칸, 위 줄 두 캡슐이 아래 줄 틈(간격) 위에 오도록
+ *   [T1][T2]
+ * [C1][C2][C3]
+ */
+.landing-glass-dock__brick {
+  display: grid;
+  grid-template-columns: repeat(6, max-content);
+  row-gap: clamp(8px, 1.4vmin, 14px);
+  column-gap: clamp(8px, 1.4vw, 18px);
+  justify-content: center;
+  align-items: center;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(1) {
+  grid-row: 1;
+  grid-column: 2 / 4;
+  justify-self: center;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(2) {
+  grid-row: 1;
+  grid-column: 4 / 6;
+  justify-self: center;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(3) {
+  grid-row: 2;
+  grid-column: 1 / 3;
+  justify-self: center;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(4) {
+  grid-row: 2;
+  grid-column: 3 / 5;
+  justify-self: center;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(5) {
+  grid-row: 2;
+  grid-column: 5 / 7;
+  justify-self: center;
+}
+
 @media (max-width: 900px) {
   .landing-glass-dock__rail {
     width: min(1963.88px, calc(100vw - 20px));
     left: clamp(-12px, -2vw, 0px);
-    min-height: clamp(260px, 48vmin, 480px);
-    flex-wrap: wrap;
-    justify-content: center;
-    row-gap: clamp(10px, 2vh, 16px);
+    min-height: clamp(200px, 42vmin, 440px);
+  }
+
+  .landing-glass-dock__brick {
+    row-gap: clamp(6px, 1.2vmin, 12px);
+    column-gap: clamp(4px, 1.2vw, 12px);
   }
 }
 
@@ -594,7 +632,8 @@ main.page-landing.page-landing--scroll-gravity {
 }
 
 /*
- * 하단 캡슐: 밝은 반투명 + 약한 테두리 + blur (조상 에 transform 없어야 WebGL이 비침)
+ * 하단 캡슐 = .flowrium-scroll-capsule-cursor 와 동일 베이스 + 얇은 그라데이션(뿌연 유리 느낌 보강).
+ * backdrop 이 죽어도 단색 회색 덩어리가 아니게 함.
  */
 .landing-glass-dock__btn {
   display: inline-flex;
@@ -606,8 +645,15 @@ main.page-landing.page-landing--scroll-gravity {
   max-width: min(94vw, 920px);
   padding: clamp(38px, 5.2vmin, 54px) clamp(48px, 7vw, 76px);
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, 0.04) 48%,
+      rgba(255, 255, 255, 0.14) 100%
+    ),
+    rgba(255, 255, 255, 0.1);
   color: rgba(245, 255, 251, 0.95);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-size: clamp(34px, 4.2vw, 44px);
@@ -620,53 +666,36 @@ main.page-landing.page-landing--scroll-gravity {
   line-height: 1;
   white-space: nowrap;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
-  opacity: 0;
   transition:
-    opacity 0.52s cubic-bezier(0.22, 1, 0.36, 1),
     background 160ms ease,
     border-color 160ms ease,
     color 160ms ease;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
-  backdrop-filter: blur(22px) saturate(125%);
-  -webkit-backdrop-filter: blur(22px) saturate(125%);
-  transform-origin: center center;
+  backdrop-filter: blur(12px) saturate(112%);
+  -webkit-backdrop-filter: blur(12px) saturate(112%);
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
-  will-change: transform;
-  /* create own layer; helps some GPU paths sample backdrop + 회전 같이 쓰기 */
-  backface-visibility: hidden;
 }
 
 .landing-glass-dock--visible .landing-glass-dock__btn {
-  animation:
-    landing-dock-btn-rise 0.56s cubic-bezier(0.22, 1, 0.36, 1) both,
-    cursor-capsule-soft-glint 3.4s ease-in-out 0.55s infinite;
+  animation: cursor-capsule-soft-glint 3.4s ease-in-out 0.55s infinite;
 }
 
-.landing-glass-dock--visible .landing-glass-dock__btn-wrap:nth-child(1) .landing-glass-dock__btn {
+.landing-glass-dock--visible .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(1) .landing-glass-dock__btn {
   animation-delay: 0.06s;
 }
-.landing-glass-dock--visible .landing-glass-dock__btn-wrap:nth-child(2) .landing-glass-dock__btn {
+.landing-glass-dock--visible .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(2) .landing-glass-dock__btn {
   animation-delay: 0.12s;
 }
-.landing-glass-dock--visible .landing-glass-dock__btn-wrap:nth-child(3) .landing-glass-dock__btn {
+.landing-glass-dock--visible .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(3) .landing-glass-dock__btn {
   animation-delay: 0.18s;
 }
-.landing-glass-dock--visible .landing-glass-dock__btn-wrap:nth-child(4) .landing-glass-dock__btn {
+.landing-glass-dock--visible .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(4) .landing-glass-dock__btn {
   animation-delay: 0.24s;
 }
-.landing-glass-dock--visible .landing-glass-dock__btn-wrap:nth-child(5) .landing-glass-dock__btn {
+.landing-glass-dock--visible .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(5) .landing-glass-dock__btn {
   animation-delay: 0.3s;
-}
-
-@keyframes landing-dock-btn-rise {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
 }
 
 .landing-glass-dock__btn::before {
@@ -678,8 +707,15 @@ main.page-landing.page-landing--scroll-gravity {
 }
 
 .landing-glass-dock__btn:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.2);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.24) 0%,
+      rgba(255, 255, 255, 0.08) 48%,
+      rgba(255, 255, 255, 0.18) 100%
+    ),
+    rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.26);
   color: #ffffff;
 }
 
@@ -690,30 +726,26 @@ main.page-landing.page-landing--scroll-gravity {
 
 @media (prefers-reduced-motion: reduce) {
   .landing-glass-dock {
-    transition: opacity 0.2s ease, bottom 0.35s ease, visibility 0s linear 0.2s;
+    transition: bottom 0.35s ease, visibility 0s linear 0.2s;
   }
 
   .landing-glass-dock:not(.landing-glass-dock--visible) {
-    opacity: 0;
     bottom: clamp(-560px, -52vh, -360px);
     visibility: hidden;
   }
 
   .landing-glass-dock--visible {
     bottom: 0;
-    opacity: 1;
     visibility: visible;
-    transition: opacity 0.2s ease, bottom 0.35s ease, visibility 0s linear 0s;
+    transition: bottom 0.35s ease, visibility 0s linear 0s;
   }
 
   .landing-glass-dock__btn {
-    opacity: 1;
     animation: none;
-    transform: none !important;
     transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
   }
 
-  .landing-glass-dock--visible .landing-glass-dock__btn-wrap:nth-child(n) .landing-glass-dock__btn {
+  .landing-glass-dock--visible .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(n) .landing-glass-dock__btn {
     animation-delay: 0ms;
   }
 }
@@ -734,22 +766,27 @@ main.page-landing.page-landing--scroll-gravity {
     #050508;
 }
 
-/* 좌측 중앙 3D 타이틀 — 카드(z-index 높음) 뒤 */
+/* 3D 타이틀 — 좌·상단 쪽, 호버 인터랙션 위해 포인터 허용 */
 .page-sub__title-3d-wrap {
   position: fixed;
   z-index: 0;
-  left: clamp(10px, 3.8vw, 52px);
-  top: 50%;
+  left: clamp(0px, 1.5vw, 20px);
+  top: clamp(26vh, 34%, 44%);
   transform: translateY(-50%);
-  width: min(58vw, 680px);
-  height: min(52vh, 460px);
-  pointer-events: none;
+  width: min(72vw, 980px);
+  height: min(64vh, 720px);
+  pointer-events: auto;
 }
 
 .page-sub__title-3d-canvas {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: grab;
+}
+
+.page-sub__title-3d-canvas:active {
+  cursor: grabbing;
 }
 
 .page-sub__back {
@@ -781,7 +818,10 @@ main.page-landing.page-landing--scroll-gravity {
   margin: 0;
 }
 
-/* React Bits CardSwap (GSAP) — 래퍼 높이·살짝 우측 시프트(3D 타이틀과 겹침 완화) */
+/*
+ * React Bits CardSwap — 타이틀과 사이 벌리기 위해 우측으로 이동.
+ * 조상에 transform 금지: Chromium에서 backdrop-filter 가 고정 WebGL(3D 타이틀)을 못 잡고 검은 덩어리로 보임.
+ */
 .page-sub__card-swap-wrap {
   position: relative;
   z-index: 10;
@@ -789,7 +829,28 @@ main.page-landing.page-landing--scroll-gravity {
   max-width: min(100%, 560px);
   height: min(740px, 78vh);
   margin: 0 auto;
-  transform: translateX(clamp(22px, 4vw, 68px));
+  margin-top: clamp(1.25rem, 4vh, 3rem);
+  left: clamp(88px, 12vw, 200px);
+  top: clamp(20px, 3.5vh, 48px);
+}
+
+.page-sub__card-swap-wrap .card__eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(180, 210, 200, 0.85);
+}
+
+.page-sub__card-swap-wrap .card__continued {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1.35rem, 3.2vw, 1.65rem);
+  font-weight: 200;
+  font-style: italic;
+  letter-spacing: 0.06em;
+  color: rgba(245, 252, 248, 0.92);
 }
 
 .page-sub__card-swap-wrap .card__sub {
@@ -807,17 +868,176 @@ main.page-landing.page-landing--scroll-gravity {
   font-weight: 300;
 }
 
+/* >Multi — 두 카드: 메시·벽돌 배경 + 대형 타이포 레이어(LG Home AI식 깊이) */
+.page-sub--multi-two {
+  background:
+    radial-gradient(ellipse 85% 55% at 12% 18%, rgba(196, 181, 253, 0.14), transparent 58%),
+    radial-gradient(ellipse 75% 50% at 88% 78%, rgba(251, 207, 232, 0.12), transparent 52%),
+    radial-gradient(ellipse 65% 45% at 48% 42%, rgba(147, 197, 253, 0.1), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 70% 20%, rgba(167, 243, 208, 0.06), transparent 50%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.028) 0,
+      rgba(255, 255, 255, 0.028) 1px,
+      transparent 1px,
+      transparent 12px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.022) 0,
+      rgba(255, 255, 255, 0.022) 1px,
+      transparent 1px,
+      transparent 12px
+    ),
+    #08080c;
+  overflow-x: hidden;
+}
+
+.page-sub__multi-typo {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.page-sub__multi-typo-tl,
+.page-sub__multi-typo-br {
+  position: absolute;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-weight: 200;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.07);
+  user-select: none;
+}
+
+.page-sub__multi-typo-tl {
+  left: clamp(8px, 3vw, 28px);
+  top: clamp(100px, 22vh, 180px);
+  font-size: clamp(2.5rem, 14vw, 7rem);
+}
+
+.page-sub__multi-typo-br {
+  right: clamp(8px, 4vw, 36px);
+  bottom: clamp(120px, 24vh, 220px);
+  font-size: clamp(2.2rem, 12vw, 6rem);
+  text-align: right;
+}
+
+.page-sub__card-swap-wrap--multi-two {
+  max-width: min(100%, 600px);
+  height: min(760px, 82vh);
+  margin-top: clamp(1rem, 3vh, 2rem);
+  left: clamp(72px, 11vw, 180px);
+  top: clamp(12px, 2.5vh, 36px);
+}
+
+.page-sub--multi-two .page-sub__title-3d-wrap {
+  z-index: 2;
+}
+
+.page-sub--multi-two .page-sub__back {
+  z-index: 22;
+}
+
+/*
+ * 하단 스크롤 힌트 캡슐 — opacity 페이드 없음(backdrop-filter 유지).
+ * 뿌연 유리: 밝은 그라데이션 + blur (멀티 레퍼런스 하단 캡슐).
+ */
+.page-sub__scroll-hint {
+  position: fixed;
+  z-index: 24;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  min-width: min(92vw, 320px);
+  padding: clamp(14px, 2.8vmin, 20px) clamp(22px, 5vw, 36px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.08) 45%,
+      rgba(255, 255, 255, 0.16) 100%
+    ),
+    rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 10px 36px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.page-sub__scroll-hint-line {
+  margin: 0;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: clamp(0.78rem, 2.1vw, 0.92rem);
+  font-weight: 350;
+  letter-spacing: 0.02em;
+  color: rgba(55, 65, 75, 0.88);
+}
+
+.page-sub__scroll-hint-line--emph {
+  margin-top: 0.2rem;
+  font-size: clamp(0.85rem, 2.35vw, 1rem);
+  font-weight: 500;
+  color: rgba(35, 42, 52, 0.92);
+}
+
 @media (max-width: 768px) {
   .page-sub__title-3d-wrap {
-    width: min(82vw, 520px);
-    height: min(42vh, 340px);
-    left: clamp(8px, 2.5vw, 24px);
+    width: min(88vw, 640px);
+    height: min(44vh, 400px);
+    left: clamp(0px, 2vw, 16px);
+    top: clamp(30vh, 36%, 46%);
   }
 
   .page-sub__card-swap-wrap {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 100%;
     max-width: min(100%, 520px);
-    height: min(680px, 74vh);
-    transform: translateX(clamp(10px, 2.5vw, 36px));
+    height: min(720px, 78vh);
+    margin: clamp(1.25rem, 4vh, 2rem) auto 0;
+    left: 0;
+    top: 0;
+  }
+
+  .page-sub__card-swap-wrap--multi-two {
+    max-width: min(100%, 520px);
+    height: min(700px, 76vh);
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    top: 0;
+  }
+
+  .page-sub__multi-typo-tl {
+    font-size: clamp(2rem, 11vw, 4.5rem);
+  }
+
+  .page-sub__multi-typo-br {
+    font-size: clamp(1.75rem, 9vw, 4rem);
+  }
+
+  .page-sub__scroll-hint {
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    min-width: min(94vw, 300px);
+    padding: 12px 18px;
+  }
+
+  .page-sub__scroll-hint-line {
+    color: rgba(70, 78, 88, 0.9);
+  }
+
+  .page-sub__scroll-hint-line--emph {
+    color: rgba(40, 48, 58, 0.95);
   }
 }
 

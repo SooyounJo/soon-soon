@@ -1,26 +1,33 @@
 import SubPageShell from '../components/SubPageShell';
 
+import cardExhibitionGrid from '../assets/multi/card-exhibition-grid.png';
+import cardMemorytoneHarmonic from '../assets/multi/card-memorytone-harmonic.png';
+
+/**
+ * >Multi — 레퍼런스 카드 2장 (번들 import, 카드 스왑마다 각 이미지 1:1 대응)
+ * 1: 그리드 배경 + 화이트 카드(전시/스크롤 캡슐 레퍼런스)
+ * 2: Memorytone 프레임 + 듀얼 폰 / Harmonic·intelligence
+ */
 const CARDS = [
   {
-    id: 'o1',
-    title: 'Multi-object',
-    subtitle: 'Scenes',
-    body: '하나의 장면에 여러 메시·머티리얼·라이트가 어우러질 때의 균형을 맞춥니다.',
+    id: 'multi-exhibition',
+    imageSrc: cardExhibitionGrid.src,
+    imageAlt: 'Multi — exhibition card on thumbnail grid',
   },
   {
-    id: 'o2',
-    title: 'Material',
-    subtitle: 'Glass & metal',
-    body: '굴절·반사·굵기의 미묘한 차이로 재질이 읽히게 조절합니다.',
-  },
-  {
-    id: 'o3',
-    title: 'LOD & instancing',
-    subtitle: 'Scale',
-    body: '디테일과 프레임 예산 사이에서 인스턴싱·LOD를 선택합니다.',
+    id: 'multi-memorytone',
+    imageSrc: cardMemorytoneHarmonic.src,
+    imageAlt: 'Multi — Memorytone harmonic card',
   },
 ];
 
 export default function PageObj() {
-  return <SubPageShell headTitle=">Multi — flowrium" title=">Multi" cards={CARDS} />;
+  return (
+    <SubPageShell
+      headTitle=">Multi — flowrium"
+      title=">Multi"
+      cards={CARDS}
+      variant="multi-two"
+    />
+  );
 }
