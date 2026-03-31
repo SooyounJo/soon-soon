@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useLayoutEffect } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import Head from 'next/head';
 
 const GlassCursorOverlay = dynamic(
@@ -11,7 +11,16 @@ const HeroFlowriumGlass3D = dynamic(() => import('../components/HeroFlowriumGlas
   ssr: false,
 });
 
+const GradientText = dynamic(() => import('../components/GradientText'), { ssr: false });
+
 export default function Home() {
+  const [isHeroReady, setIsHeroReady] = useState(false);
+  const [showEntryLoader, setShowEntryLoader] = useState(true);
+
+  const handleHeroReady = useCallback(() => {
+    setIsHeroReady(true);
+  }, []);
+
   useLayoutEffect(() => {
     document.documentElement.classList.add(
       'flowrium-home',
@@ -36,6 +45,19 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isHeroReady) return;
+    const id = window.setTimeout(() => setShowEntryLoader(false), 520);
+    return () => window.clearTimeout(id);
+  }, [isHeroReady]);
+
+  useEffect(() => {
+    const failSafe = window.setTimeout(() => {
+      setShowEntryLoader(false);
+    }, 9000);
+    return () => window.clearTimeout(failSafe);
+  }, []);
+
   return (
     <>
       <Head>
@@ -50,6 +72,18 @@ export default function Home() {
         />
       </Head>
       <GlassCursorOverlay />
+      {showEntryLoader ? (
+        <div
+          className={`flowrium-entry-loader${isHeroReady ? ' flowrium-entry-loader--leave' : ''}`}
+          aria-hidden
+        >
+          <div className="flowrium-entry-loader-wordmark bagel-fat-one-regular">
+            <span className="flowrium-entry-loader-line">soon</span>
+            <span className="flowrium-entry-loader-dash">-</span>
+            <span className="flowrium-entry-loader-line">soon</span>
+          </div>
+        </div>
+      ) : null}
       <main className="page page-landing page-landing--mint page-landing--scroll-gravity">
         <section
           className="landing-hero landing-hero--fixed-gravity"
@@ -68,7 +102,16 @@ export default function Home() {
               <span className="landing-hero-chrome-line landing-hero-chrome-line--corner">
                 © flowrium
               </span>
-              <span className="landing-hero-chrome-scroll">Scroll Down</span>
+              <span className="landing-hero-chrome-scroll landing-hero-chrome-scroll-hint-wrap">
+                <GradientText
+                  colors={['#22C55E', '#4ADE80', '#86EFAC']}
+                  animationSpeed={8}
+                  showBorder={false}
+                  className="landing-hero-chrome-scroll--gradient"
+                >
+                  Scroll Down
+                </GradientText>
+              </span>
               <span className="landing-hero-chrome-line landing-hero-chrome-line--corner landing-hero-chrome-line--end">
                 digital · spatial · type
               </span>
@@ -86,7 +129,7 @@ export default function Home() {
                     <span className="hero-soon-soon-line">soon</span>
                   </h1>
                   <div className="hero-flowrium-webgl-mount">
-                    <HeroFlowriumGlass3D />
+                    <HeroFlowriumGlass3D onReady={handleHeroReady} />
                   </div>
                 </div>
               </div>

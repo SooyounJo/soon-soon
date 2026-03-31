@@ -1,7 +1,9 @@
-import { Suspense, useEffect, useLayoutEffect, useRef } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, MeshTransmissionMaterial, OrthographicCamera } from '@react-three/drei';
 import * as THREE from 'three';
+import WebGLSceneBoundary from './WebGLSceneBoundary';
+import { isWebGLAvailable } from '../utils/webglProbe';
 
 /** 히어로 씬과 동일 — 굴절 배경 톤 */
 const CURSOR_GLASS_BG = new THREE.Color('#000000');
@@ -87,6 +89,30 @@ function GlassCursorBall() {
 }
 
 export default function GlassCursorOverlay() {
+  const [allowWebGL] = useState(() => isWebGLAvailable());
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [hasPointer, setHasPointer] = useState(false);
+  const [showLandingCapsule, setShowLandingCapsule] = useState(true);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      setCursorPos({ x: e.clientX, y: e.clientY });
+      setHasPointer(true);
+    };
+    const onScroll = () => {
+      setShowLandingCapsule(window.scrollY < 24);
+    };
+    onScroll();
+    window.addEventListener('pointermove', onMove, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+
+  if (!allowWebGL && !showLandingCapsule) return null;
+
   return (
     <div
       className="flowrium-glass-cursor-webgl"
@@ -100,33 +126,56 @@ export default function GlassCursorOverlay() {
         zIndex: 99999,
       }}
     >
-      <Canvas
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'block',
-          pointerEvents: 'none',
-        }}
-        gl={{ alpha: true, antialias: true, powerPreference: 'high-performance', stencil: false }}
-        frameloop="demand"
-        dpr={[1, 1.12]}
-        onCreated={({ gl, invalidate }) => {
-          gl.setClearColor(0x000000, 0);
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.05;
-          invalidate();
-        }}
-      >
-        <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={72} near={0.1} far={200} />
-        <CursorSceneBackdrop />
-        <ambientLight intensity={0.22} />
-        <directionalLight position={[5, 8, 6]} intensity={1.35} color="#fffaf6" />
-        <directionalLight position={[-4, -2, 4]} intensity={0.35} color="#c8dcff" />
-        <Suspense fallback={null}>
-          <Environment preset="studio" environmentIntensity={0.92} resolution={64} />
-          <GlassCursorBall />
-        </Suspense>
-      </Canvas>
+      {showLandingCapsule ? (
+        <div
+          className={`flowrium-scroll-capsule-cursor${
+            hasPointer ? ' flowrium-scroll-capsule-cursor--visible' : ''
+          }`}
+          style={{
+            transform: `translate3d(${cursorPos.x}px, ${cursorPos.y}px, 0)`,
+          }}
+        >
+          <span>Scroll Down</span>
+        </div>
+      ) : null}
+
+      {!showLandingCapsule && allowWebGL ? (
+        <WebGLSceneBoundary fallback={null}>
+          <Canvas
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'block',
+              pointerEvents: 'none',
+            }}
+            gl={{
+              alpha: true,
+              antialias: true,
+              powerPreference: 'high-performance',
+              stencil: false,
+              failIfMajorPerformanceCaveat: false,
+            }}
+            frameloop="demand"
+            dpr={[1, 1.12]}
+            onCreated={({ gl, invalidate }) => {
+              gl.setClearColor(0x000000, 0);
+              gl.toneMapping = THREE.ACESFilmicToneMapping;
+              gl.toneMappingExposure = 1.05;
+              invalidate();
+            }}
+          >
+            <OrthographicCamera makeDefault position={[0, 0, 10]} zoom={72} near={0.1} far={200} />
+            <CursorSceneBackdrop />
+            <ambientLight intensity={0.22} />
+            <directionalLight position={[5, 8, 6]} intensity={1.35} color="#fffaf6" />
+            <directionalLight position={[-4, -2, 4]} intensity={0.35} color="#c8dcff" />
+            <Suspense fallback={null}>
+              <Environment preset="studio" environmentIntensity={0.92} resolution={64} />
+              <GlassCursorBall />
+            </Suspense>
+          </Canvas>
+        </WebGLSceneBoundary>
+      ) : null}
     </div>
   );
 }

@@ -6,7 +6,6 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
 } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import {
@@ -22,6 +21,7 @@ import {
 import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js';
 import * as THREE from 'three';
 import { useRouter } from 'next/router';
+import WebGLSceneBoundary from './WebGLSceneBoundary';
 
 const _v = new THREE.Vector3();
 const _closest = new THREE.Vector3();
@@ -44,11 +44,14 @@ const RAIN_Y_TOP = 4.6;
 const RAIN_Y_BOTTOM = -4.2;
 
 /** 글자·방울 낙하 강도 (월드 Y, 음수 = 아래) */
-const LETTER_FALL_DIST = 6.2;
+const LETTER_FALL_DIST = 9.35;
 const LETTER_SCATTER = 2.35;
 const DROPLET_FLOOR_Y = -5.85;
-/** 스크롤 시 카메라가 아래로 따라가는 거리 — 타이포 낙하와 비슷한 비율 */
-const CAMERA_FOLLOW_Y = LETTER_FALL_DIST * 0.88;
+
+/** soon 위 · view 아래(세로 스택). 스크롤 p↑ → 씬 패닝으로 view가 화면 중앙으로 */
+const TYPO_SOON_LOCAL_Y = 1.18;
+const TYPO_VIEW_LOCAL_Y = -5.05;
+const SCROLL_PAN_Y_AT_FULL = -TYPO_VIEW_LOCAL_Y;
 
 /** 문서 스크롤 0~1: 여기까지 soon 낙하 / 이후 view + 물방울 원형 */
 const PHASE1_END = 0.44;
@@ -613,17 +616,13 @@ function NavOrbitCluster() {
   );
 }
 
-/** 문서 스크롤 0→1 스무딩 — 글자 분해·방울 바닥·카메라 팔로우 공유 */
+/** 문서 스크롤 0→1 ↔ smooth (양방향 연속). soon·방울 낙하 + 씬 패닝으로 view 중앙 정렬 */
 function ScrollFallBridge({ children }) {
   const target = useRef(0);
   const smooth = useRef(0);
   const invalidate = useThree((s) => s.invalidate);
   const camera = useThree((s) => s.camera);
   const baseCam = useRef(/** @type {{ x: number; y: number; z: number } | null} */ (null));
-  const stageRef = useRef(0); // 0: pre, 1: coding snap, 2: view snap
-
-  const CODING_SNAP_P = VISUAL_CODING_START + 0.03; // stage1 고정 진행값(오버레이가 완전 표시되도록)
-  const VIEW_SNAP_P = 0.92; // stage2 고정 진행값
 
   useLayoutEffect(() => {
     baseCam.current = {
@@ -635,11 +634,8 @@ function ScrollFallBridge({ children }) {
 
   useEffect(() => {
     const onScroll = () => {
-      const el = document.documentElement;
-      const maxScroll = Math.max(1, el.scrollHeight - window.innerHeight);
-      const rawP = Math.min(1, window.scrollY / maxScroll);
-      target.current = rawP;
-      // demand frameloop: 스크롤로 진행이 바뀌면 즉시 1프레임 렌더
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      target.current = Math.min(1, Math.max(0, window.scrollY / maxScroll));
       invalidate();
     };
     onScroll();
@@ -647,58 +643,26 @@ function ScrollFallBridge({ children }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, [invalidate]);
 
-  const wheelLockRef = useRef(0);
-  useEffect(() => {
-    const onWheel = (e) => {
-      if (!e.deltaY) return;
-      const now = performance.now();
-      if (now - wheelLockRef.current < 180) return;
-      wheelLockRef.current = now;
-
-      const dir = e.deltaY > 0 ? 1 : -1;
-      const cur = stageRef.current;
-      let next = cur;
-      if (dir > 0) next = cur === 0 ? 1 : cur === 1 ? 2 : 2;
-      else next = cur === 2 ? 1 : cur === 1 ? 0 : 0;
-
-      if (next !== cur) {
-        stageRef.current = next;
-        smooth.current =
-          next === 0 ? target.current : next === 1 ? CODING_SNAP_P : VIEW_SNAP_P;
-        invalidate();
-      }
-    };
-    window.addEventListener('wheel', onWheel, { passive: true });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, [invalidate, CODING_SNAP_P, VIEW_SNAP_P]);
-
-  useFrame((state, delta) => {
-    const rawP = target.current;
-
-    if (stageRef.current === 0) {
-      // stage0: 스크롤에 맞춰 자연스럽게
-      const k = 1 - Math.exp(-13 * delta);
-      smooth.current += (rawP - smooth.current) * k;
-    } else {
-      // stage1/2: 스냅 고정(추가 스무딩 없음)
-      smooth.current =
-        stageRef.current === 1 ? CODING_SNAP_P : VIEW_SNAP_P;
-    }
+  useFrame((_, delta) => {
+    const k = 1 - Math.exp(-14 * delta);
+    const prev = smooth.current;
+    smooth.current += (target.current - smooth.current) * k;
 
     const p = smooth.current;
-    const e1 = scrollPhase1Ease(p);
     const e2 = scrollPhase2Ease(p);
-    /** 페이즈1만 Y 팔로우 — 페이즈2에서 카메라를 다시 정면(축 정렬)으로 복귀 */
-    const followBlend = e1 * (1 - e2);
     const b = baseCam.current;
     if (b) {
       camera.position.x = THREE.MathUtils.lerp(b.x, 0, e2);
-      camera.position.y = b.y - CAMERA_FOLLOW_Y * followBlend;
+      camera.position.y = b.y;
       camera.position.z = b.z;
     }
-    // stage 0/1에서는 물방울/호버/오버레이를 계속 업데이트해야 합니다.
-    // stage 2에서는 "스냅" 상태로 멈춰있게(필요할 때만 onScroll/hover가 invalidate).
-    if (stageRef.current !== 2) invalidate();
+
+    if (
+      Math.abs(prev - smooth.current) > 1e-5 ||
+      Math.abs(target.current - smooth.current) > 2e-3
+    ) {
+      invalidate();
+    }
   });
 
   return (
@@ -942,8 +906,8 @@ function OrbitBoundsPadding() {
       depthTest={false}
     />
   );
-  const yLo = DROPLET_CIRCLE_CENTER_Y;
-  const yHi = -DROPLET_CIRCLE_CENTER_Y;
+  const yLo = Math.min(TYPO_VIEW_LOCAL_Y, DROPLET_CIRCLE_CENTER_Y) - ORBIT_BOUNDS_PAD_R * 0.35;
+  const yHi = Math.max(TYPO_SOON_LOCAL_Y, -DROPLET_CIRCLE_CENTER_Y) + ORBIT_BOUNDS_PAD_R * 0.35;
   return (
     <group>
       <mesh position={[0, yLo, 0]} raycast={() => null}>
@@ -958,11 +922,10 @@ function OrbitBoundsPadding() {
   );
 }
 
-function PhaseTypography({ mode }) {
+function PhaseTypography({ lines, mode }) {
   const fontData = useLoader(TTFLoader, BAGEL_TTF);
   const invalidate = useThree((s) => s.invalidate);
 
-  const lines = mode === 'view' ? LINES_VIEW : LINES_SOON;
   const letterItems = useMemo(
     () => buildLetterLayout(fontData, lines, TEXT_SIZE),
     [fontData, lines]
@@ -976,8 +939,8 @@ function PhaseTypography({ mode }) {
     <>
       {letterItems.map(({ char, position, key }, i) => (
         <ExtrudedLetter
-          key={key}
-          letterKey={key}
+          key={`${mode}-${key}`}
+          letterKey={`${mode}-${key}`}
           char={char}
           position={position}
           font={fontData}
@@ -991,88 +954,100 @@ function PhaseTypography({ mode }) {
 
 function HeroViewBlock() {
   const scrollRef = useContext(ScrollFallContext);
-  const [mode, setMode] = useState('soon');
-  const modeRef = useRef('soon');
+  const panRef = useRef(/** @type {THREE.Group | null} */ (null));
 
   useFrame(() => {
-    // 스테이지1/2 스냅값 기준으로만 모드를 전환:
-    // stage1(coding)에서는 p가 낮게 고정되고, stage2(view)는 p가 크게 점프하므로
-    // 중간 스크롤에서 줌/fit이 반복되는 걸 막습니다.
     const p = scrollRef.current;
-    const want = p >= 0.86 ? 'view' : 'soon';
-    if (want !== modeRef.current) {
-      modeRef.current = want;
-      setMode(want);
+    const u = easeScrollFall(p);
+    const g = panRef.current;
+    if (g) {
+      g.position.y = u * SCROLL_PAN_Y_AT_FULL;
     }
   });
 
   return (
-    <ViewScrollFacingGroup>
-      <Bounds
-        fit
-        clip={false}
-        observe={false}
-        margin={mode === 'view' ? 2.05 : 2.1}
-        maxDuration={0.28}
-      >
-        <RefitBoundsAfterLoad mode={mode} />
-        <OrbitBoundsPadding />
-        <PhaseTypography mode={mode} />
-      </Bounds>
-    </ViewScrollFacingGroup>
+    <group ref={panRef}>
+      <ViewScrollFacingGroup>
+        <Bounds fit clip={false} observe={false} margin={2.12} maxDuration={0}>
+          <RefitBoundsAfterLoad mode="stacked" />
+          <OrbitBoundsPadding />
+          <group position={[0, TYPO_SOON_LOCAL_Y, 0]}>
+            <PhaseTypography lines={LINES_SOON} mode="soon" />
+          </group>
+          <group position={[0, TYPO_VIEW_LOCAL_Y, 0]}>
+            <PhaseTypography lines={LINES_VIEW} mode="view" />
+          </group>
+        </Bounds>
+        <WaterDropletsField />
+      </ViewScrollFacingGroup>
+    </group>
   );
 }
 
-export default function HeroFlowriumGlass3D() {
+export default function HeroFlowriumGlass3D({ onReady }) {
   useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const shell = document.querySelector('.hero-flowrium-glass-shell');
-    shell?.classList.add('hero-flowrium-webgl-text-ready');
     return () => {
-      shell?.classList.remove('hero-flowrium-webgl-text-ready');
+      if (typeof document === 'undefined') return;
+      document
+        .querySelector('.hero-flowrium-glass-shell')
+        ?.classList.remove('hero-flowrium-webgl-text-ready');
     };
   }, []);
 
   return (
     <div className="hero-flowrium-glass-root hero-flowrium-glass-root--interactive">
-      <Canvas
-        frameloop="demand"
-        camera={{ position: [0.15, 0.06, 9.6], fov: 44 }}
-        gl={{
-          alpha: false,
-          antialias: true,
-          powerPreference: 'high-performance',
-          stencil: false,
+      <WebGLSceneBoundary
+        onError={() => {
+          document
+            .querySelector('.hero-flowrium-glass-shell')
+            ?.classList.remove('hero-flowrium-webgl-text-ready');
+          onReady?.();
         }}
-        dpr={[1, 1.22]}
-        onCreated={({ gl, invalidate }) => {
-          gl.setClearColor(SCENE_CLEAR_HEX, 1);
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.24;
-          invalidate();
-        }}
+        fallback={null}
       >
-        <SceneSolidBackdrop />
-        <ambientLight intensity={0.28} />
-        <directionalLight
-          position={[-9, 11, 6]}
-          intensity={2.85}
-          color="#fffef8"
-          castShadow={false}
-        />
-        <directionalLight position={[7.5, -3, 5.5]} intensity={1.05} color="#dce8ff" />
-        <pointLight position={[-5.5, 8.5, 6.5]} intensity={1.15} color="#ffffff" />
-        <hemisphereLight args={['#f2f6ff', '#2a3028', 0.62]} />
-        <ScrollFallBridge>
-          <Suspense fallback={null}>
-            <DemandBootFrames />
-            <Environment preset="studio" environmentIntensity={1.18} resolution={128} />
-            <HeroViewBlock />
-          </Suspense>
-          <ScrollMappedOverlays />
-          <WaterDropletsField />
-        </ScrollFallBridge>
-      </Canvas>
+        <Canvas
+          frameloop="demand"
+          camera={{ position: [0.15, 0.06, 9.6], fov: 44 }}
+          gl={{
+            alpha: false,
+            antialias: true,
+            powerPreference: 'high-performance',
+            stencil: false,
+            failIfMajorPerformanceCaveat: false,
+          }}
+          dpr={[1, 1.22]}
+          onCreated={({ gl, invalidate }) => {
+            gl.setClearColor(SCENE_CLEAR_HEX, 1);
+            gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.toneMappingExposure = 1.24;
+            document
+              .querySelector('.hero-flowrium-glass-shell')
+              ?.classList.add('hero-flowrium-webgl-text-ready');
+            onReady?.();
+            invalidate();
+          }}
+        >
+          <SceneSolidBackdrop />
+          <ambientLight intensity={0.28} />
+          <directionalLight
+            position={[-9, 11, 6]}
+            intensity={2.85}
+            color="#fffef8"
+            castShadow={false}
+          />
+          <directionalLight position={[7.5, -3, 5.5]} intensity={1.05} color="#dce8ff" />
+          <pointLight position={[-5.5, 8.5, 6.5]} intensity={1.15} color="#ffffff" />
+          <hemisphereLight args={['#f2f6ff', '#2a3028', 0.62]} />
+          <ScrollFallBridge>
+            <Suspense fallback={null}>
+              <DemandBootFrames />
+              <Environment preset="studio" environmentIntensity={1.18} resolution={128} />
+              <HeroViewBlock />
+            </Suspense>
+            <ScrollMappedOverlays />
+          </ScrollFallBridge>
+        </Canvas>
+      </WebGLSceneBoundary>
     </div>
   );
 }
