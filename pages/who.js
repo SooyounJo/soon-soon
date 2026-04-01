@@ -1,5 +1,5 @@
-import WhoFigmaEmbed from '../components/WhoFigmaEmbed';
+import WhoMcpCss from '../components/WhoMcpCss';
 
 export default function PageWho() {
-  return <WhoFigmaEmbed />;
+  return <WhoMcpCss />;
 }

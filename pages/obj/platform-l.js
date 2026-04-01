@@ -8,12 +8,7 @@ import {
 
 export default function PagePlatformL() {
   return (
-    <FigmaMcpCaseLayout
-      headTitle="Multi · Platform-L — flowrium"
-      backHref="/obj"
-      backLabel={'< Multi'}
-      nodeId="834:937"
-    >
+    <FigmaMcpCaseLayout headTitle="Multi · Platform-L — flowrium" nodeId="834:937">
       <h1 className="mcp-case__title">Platform-L 무라카미 하루키전</h1>
       <p className="mcp-case__lede">‘무라카미 하루키에게 한 마디’</p>
       <p className="mcp-case__lede">‘슬라이드로 미디어월 인터랙션’</p>

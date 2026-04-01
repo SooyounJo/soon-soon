@@ -1,3 +1,4 @@
+import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useVideoTbcActive } from '../contexts/VideoDockCursorContext';
 import scrollLandingToView from '../utils/scrollLandingToView';
@@ -7,6 +8,8 @@ import scrollLandingToView from '../utils/scrollLandingToView';
  * 초기: 캡슐 라벨 / 이후: 가벼운 CSS 링.
  */
 export default function GlassCursorOverlay() {
+  const router = useRouter();
+  const isHome = router.pathname === '/';
   const SCROLL_TO_RING_THRESHOLD = 6;
   const videoTbcActive = useVideoTbcActive();
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
@@ -19,16 +22,17 @@ export default function GlassCursorOverlay() {
       setHasPointer(true);
     };
     const onScroll = () => {
+      if (!isHome) return;
       setShowLandingCapsule(window.scrollY < SCROLL_TO_RING_THRESHOLD);
     };
-    onScroll();
+    if (isHome) onScroll();
     window.addEventListener('pointermove', onMove, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
+    if (isHome) window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('scroll', onScroll);
+      if (isHome) window.removeEventListener('scroll', onScroll);
     };
-  }, []);
+  }, [isHome]);
 
   if (videoTbcActive) {
     return null;
@@ -47,7 +51,7 @@ export default function GlassCursorOverlay() {
         zIndex: 99999,
       }}
     >
-      {showLandingCapsule ? (
+      {isHome && showLandingCapsule ? (
         <button
           type="button"
           className={`flowrium-scroll-capsule-cursor${

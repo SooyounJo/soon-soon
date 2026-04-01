@@ -21,8 +21,6 @@ export default function LandingGlassDockNav({ visible }) {
   const router = useRouter();
   const { startVideoTbc } = useVideoDockCursor();
   const [videoDisabled, setVideoDisabled] = useState(false);
-  /** 첫 클릭: TBC 3초만 보여 준 뒤 복구. 이후 클릭에서만 /vid 이동 */
-  const [videoTbcPlayed, setVideoTbcPlayed] = useState(false);
 
   const markReturnToView = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -36,31 +34,20 @@ export default function LandingGlassDockNav({ visible }) {
   const onDockClick = useCallback(
     (e, item) => {
       if (item.href === '/vid') {
-        if (videoTbcPlayed) {
-          markReturnToView();
-          return;
-        }
         e.preventDefault();
         if (videoDisabled) return;
-        if (
-          typeof window !== 'undefined' &&
-          window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ) {
-          markReturnToView();
-          router.push('/vid');
-          return;
-        }
         markReturnToView();
         setVideoDisabled(true);
         startVideoTbc(() => {
-          setVideoDisabled(false);
-          setVideoTbcPlayed(true);
+          router.push('/vid');
+          // push 실패/지연 시에도 버튼이 영구 비활성화로 남지 않게 복구
+          window.setTimeout(() => setVideoDisabled(false), 800);
         });
         return;
       }
       markReturnToView();
     },
-    [markReturnToView, router, startVideoTbc, videoDisabled, videoTbcPlayed]
+    [markReturnToView, router, startVideoTbc, videoDisabled]
   );
 
   const renderWrap = (item, i, globalIndex) => {

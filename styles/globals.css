@@ -61,6 +61,326 @@ html.page-who-figma-root #__next {
   max-height: 100dvh;
 }
 
+/* /who — MCP CSS 렌더 (임베드 아님): 문서 스크롤 허용 */
+html.page-who-mcp-root,
+html.page-who-mcp-root body,
+html.page-who-mcp-root #__next {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  background: #050508;
+}
+
+.page-who-mcp {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #050508;
+  color: rgba(247, 251, 255, 0.95);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.page-who-mcp__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: clamp(10px, 2vw, 14px) clamp(14px, 3vw, 22px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.page-who-mcp__back,
+.page-who-mcp__open {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.page-who-mcp__open {
+  opacity: 0.82;
+}
+
+.page-who-mcp__back:hover,
+.page-who-mcp__open:hover {
+  color: #fff;
+}
+
+.page-who-mcp__scroll {
+  overflow: visible;
+}
+
+/* 기존 내부 패널 스크롤 숨김 규칙은 문서 스크롤로 전환하며 제거 */
+
+.who-mcp {
+  position: relative;
+  width: 100%;
+  min-height: 2200px;
+  background: #000;
+}
+
+.who-mcp__top-gradient {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: min(52vh, 720px);
+  background: linear-gradient(
+    180deg,
+    rgba(153, 188, 173, 0.25) 0%,
+    rgba(249, 249, 249, 0.08) 48%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.who-mcp__top {
+  position: relative;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(28px, 4vw, 56px) clamp(16px, 3vw, 28px) clamp(36px, 4vw, 54px);
+}
+
+.who-mcp__profile {
+  max-width: 360px;
+}
+
+.who-mcp__role-en {
+  margin: 0 0 6px;
+  font-size: clamp(16px, 2.1vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(13, 255, 13, 0.55);
+}
+
+.who-mcp__role-ko {
+  margin: 0 0 18px;
+  font-size: clamp(18px, 2.6vw, 26px);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.who-mcp__name {
+  margin: 0 0 6px;
+  font-size: clamp(44px, 6vw, 64px);
+  letter-spacing: -0.04em;
+  font-weight: 700;
+}
+
+.who-mcp__years {
+  margin: 0 0 14px;
+  font-size: clamp(18px, 2.6vw, 26px);
+  font-weight: 700;
+}
+
+.who-mcp__edu p {
+  margin: 0;
+  font-size: clamp(14px, 1.9vw, 18px);
+  opacity: 0.92;
+}
+
+.who-mcp__cols {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr;
+  gap: clamp(18px, 2.2vw, 36px);
+  margin-top: clamp(22px, 3vw, 38px);
+  align-items: start;
+}
+
+@media (max-width: 1020px) {
+  .who-mcp__cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.who-mcp__col-title {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.who-mcp__timeline {
+  position: relative;
+  padding-left: 18px;
+}
+
+.who-mcp__line {
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.who-mcp__dot {
+  position: absolute;
+  left: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.who-mcp__dot--top {
+  top: 6px;
+}
+
+.who-mcp__dot--bottom {
+  bottom: 6px;
+}
+
+.who-mcp__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.who-mcp__list li {
+  margin: 0 0 10px;
+  opacity: 0.95;
+}
+
+.who-mcp__list b {
+  font-weight: 700;
+}
+
+.who-mcp__skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+
+.who-mcp__skill-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.who-mcp__skill-items {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  opacity: 0.92;
+}
+
+.who-mcp__pills {
+  margin: clamp(18px, 2.8vw, 30px) auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 10px 12px;
+  justify-content: center;
+}
+
+.who-mcp__pill {
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(217, 217, 217, 0.55);
+  color: rgba(0, 0, 0, 0.75);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.who-mcp__bottom {
+  position: relative;
+  margin-top: clamp(26px, 4vw, 44px);
+  min-height: 980px;
+  overflow: hidden;
+}
+
+.who-mcp__rock {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: max(1600px, 140vw);
+  height: auto;
+  opacity: 0.95;
+  pointer-events: none;
+  user-select: none;
+}
+
+.who-mcp__bottom-wash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(19, 19, 19, 1) 0%, rgba(0, 0, 0, 0) 38%);
+  pointer-events: none;
+}
+
+.who-mcp__statement {
+  position: relative;
+  margin: 0 auto;
+  padding-top: clamp(220px, 20vw, 340px);
+  max-width: 860px;
+  text-align: center;
+  font-size: clamp(18px, 2.4vw, 28px);
+  line-height: 1.35;
+  text-shadow: 0 4px 13px rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.who-mcp__cards {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(14px, 2vw, 22px);
+  max-width: 1180px;
+  margin: clamp(22px, 3vw, 34px) auto 0;
+  padding: 0 clamp(16px, 3vw, 28px) clamp(26px, 4vw, 54px);
+}
+
+@media (max-width: 980px) {
+  .who-mcp__cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.who-mcp__card {
+  border-radius: 20px;
+  padding: 22px 22px 24px;
+  background: linear-gradient(180deg, rgba(166, 254, 166, 0.62), rgba(255, 255, 255, 0.22));
+  color: rgba(0, 0, 0, 0.9);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.who-mcp__card-num {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.who-mcp__card-title {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.who-mcp__card-line {
+  width: 100%;
+  height: 2px;
+  object-fit: cover;
+  opacity: 0.7;
+  margin: 0 0 12px;
+}
+
+.who-mcp__card-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  font-weight: 700;
+}
+
 /* 메인: 스크롤은 쓰되 스크롤바만 숨김 */
 html.flowrium-home {
   overflow-x: hidden;
@@ -324,6 +644,11 @@ html.flowrium-glass-cursor body {
   pointer-events: none !important;
 }
 
+/* 이미지 호버 라벨이 뜰 땐 링은 즉시 숨김(겹침 방지) */
+html.flowrium-mcp-view-cursor-active .flowrium-glass-cursor-webgl {
+  opacity: 0 !important;
+}
+
 .flowrium-entry-loader {
   position: fixed;
   inset: 0;
@@ -556,6 +881,11 @@ html.flowrium-glass-cursor body {
   -webkit-backdrop-filter: blur(14px) saturate(122%);
 }
 
+.mcp-case-view-cursor__inner--textonly {
+  gap: 0;
+  padding: 7px 14px;
+}
+
 .mcp-case-view-cursor__ring {
   flex-shrink: 0;
   width: 30px;
@@ -589,12 +919,12 @@ html.flowrium-glass-cursor body {
 
 @media (prefers-reduced-motion: reduce) {
   .mcp-case-view-cursor {
-    display: none !important;
+    transition: none;
   }
 
-  .mcp-case img,
-  .card--media img {
-    cursor: auto;
+  .mcp-case-view-cursor__inner {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 
@@ -807,7 +1137,7 @@ main.page-landing.page-landing--scroll-gravity {
   width: max-content;
   min-width: 0;
   max-width: min(94vw, 920px);
-  padding: clamp(38px, 5.2vmin, 54px) clamp(48px, 7vw, 76px);
+  padding: clamp(42px, 5.6vmin, 58px) clamp(54px, 7.4vw, 82px);
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background:
@@ -820,7 +1150,7 @@ main.page-landing.page-landing--scroll-gravity {
     rgba(255, 255, 255, 0.1);
   color: rgba(245, 255, 251, 0.95);
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: clamp(34px, 4.2vw, 44px);
+  font-size: clamp(36px, 4.35vw, 46px);
   font-weight: 200;
   font-variation-settings: 'wght' 200;
   letter-spacing: 0.05em;
@@ -1001,6 +1331,166 @@ main.page-landing.page-landing--scroll-gravity {
   margin: 0;
 }
 
+/* /2d — 좌 2장 썸네일 + 우 슬라이드쇼 */
+.page-sub__custom-wrap {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: min(1200px, 96vw);
+  margin: 0 auto;
+  margin-top: clamp(0.5rem, 1.5vh, 1.2rem);
+}
+
+.mobile-hub {
+  display: grid;
+  grid-template-columns: clamp(150px, 18vw, 240px) minmax(0, 1fr);
+  gap: clamp(12px, 2vw, 22px);
+  align-items: stretch;
+  height: min(760px, 72vh);
+}
+
+.mobile-hub__left {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.6vh, 14px);
+}
+
+.mobile-hub__thumb {
+  all: unset;
+  cursor: pointer;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0.1) 100%),
+    rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.mobile-hub__thumb:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.mobile-hub__thumb--active {
+  border-color: rgba(134, 239, 172, 0.45);
+}
+
+.mobile-hub__thumb-img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.mobile-hub__thumb-meta {
+  display: grid;
+  gap: 2px;
+  padding: 2px 2px 0;
+}
+
+.mobile-hub__thumb-title {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.mobile-hub__thumb-sub {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(180, 210, 200, 0.75);
+}
+
+.mobile-hub__right {
+  min-width: 0;
+  height: 100%;
+}
+
+.mobile-hub__stage {
+  all: unset;
+  cursor: pointer;
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(120% 80% at 18% 0%, rgba(52, 211, 153, 0.08), transparent 58%),
+    radial-gradient(95% 55% at 100% 28%, rgba(59, 130, 246, 0.06), transparent 55%),
+    rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+.mobile-hub__stage-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.mobile-hub__stage-hud {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(8, 8, 12, 0.62);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+.mobile-hub__stage-hud-title {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.mobile-hub__stage-hud-count {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+@media (max-width: 860px) {
+  .mobile-hub {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: min(760px, 74vh);
+  }
+
+  .mobile-hub__left {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .mobile-hub__thumb {
+    width: 50%;
+  }
+}
+
 /*
  * React Bits CardSwap — 타이틀과 사이 벌리기 위해 우측으로 이동.
  * 조상에 transform 금지: Chromium에서 backdrop-filter 가 고정 WebGL(3D 타이틀)을 못 잡고 검은 덩어리로 보임.
@@ -1017,28 +1507,7 @@ main.page-landing.page-landing--scroll-gravity {
   top: clamp(20px, 3.5vh, 48px);
 }
 
-/* Lab — 스택 축소 + 메인 flex 로 카드 영역만 뷰포트 하단·우측 */
-.page-sub--lab {
-  min-height: 100vh;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
-
-.page-sub--lab .page-sub__card-swap-wrap--lab {
-  position: relative;
-  margin: 0;
-  margin-top: auto;
-  align-self: flex-end;
-  margin-bottom: clamp(0.2rem, 1.2vh, 0.85rem);
-  margin-left: auto;
-  margin-right: clamp(12px, 2.5vw, 36px);
-  left: clamp(-56px, -10vw, -168px);
-  top: 0;
-  max-width: min(100%, 460px);
-  height: min(600px, 64vh);
-  z-index: 10;
-}
+/* Hub(Lab/Mobile/Multi) — 동일 템플릿으로 통일 */
 
 .page-sub__card-swap-wrap .card__eyebrow {
   margin: 0 0 0.5rem;
@@ -1074,7 +1543,8 @@ main.page-landing.page-landing--scroll-gravity {
   font-weight: 300;
 }
 
-/* >Multi — 두 카드: 메시·벽돌 배경 + 대형 타이포 레이어(LG Home AI식 깊이) */
+/* Hub(Lab/Mobile/Multi) — 메시·벽돌 배경 + 대형 타이포 레이어 */
+.page-sub--hub,
 .page-sub--multi-two {
   background:
     radial-gradient(ellipse 85% 55% at 12% 18%, rgba(196, 181, 253, 0.14), transparent 58%),
@@ -1099,7 +1569,7 @@ main.page-landing.page-landing--scroll-gravity {
   overflow-x: hidden;
 }
 
-.page-sub__multi-typo {
+.page-sub__hub-typo {
   position: fixed;
   inset: 0;
   z-index: 1;
@@ -1107,8 +1577,8 @@ main.page-landing.page-landing--scroll-gravity {
   overflow: hidden;
 }
 
-.page-sub__multi-typo-tl,
-.page-sub__multi-typo-br {
+.page-sub__hub-typo-tl,
+.page-sub__hub-typo-br {
   position: absolute;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-weight: 200;
@@ -1118,19 +1588,20 @@ main.page-landing.page-landing--scroll-gravity {
   user-select: none;
 }
 
-.page-sub__multi-typo-tl {
+.page-sub__hub-typo-tl {
   left: clamp(8px, 3vw, 28px);
   top: clamp(100px, 22vh, 180px);
   font-size: clamp(2.5rem, 14vw, 7rem);
 }
 
-.page-sub__multi-typo-br {
+.page-sub__hub-typo-br {
   right: clamp(8px, 4vw, 36px);
   bottom: clamp(120px, 24vh, 220px);
   font-size: clamp(2.2rem, 12vw, 6rem);
   text-align: right;
 }
 
+.page-sub__card-swap-wrap--hub,
 .page-sub__card-swap-wrap--multi-two {
   max-width: min(100%, 600px);
   height: min(760px, 82vh);
@@ -1139,61 +1610,17 @@ main.page-landing.page-landing--scroll-gravity {
   top: clamp(12px, 2.5vh, 36px);
 }
 
+.page-sub--hub .page-sub__title-3d-wrap,
 .page-sub--multi-two .page-sub__title-3d-wrap {
   z-index: 2;
 }
 
+.page-sub--hub .page-sub__back,
 .page-sub--multi-two .page-sub__back {
   z-index: 22;
 }
 
-/*
- * 하단 스크롤 힌트 캡슐 — opacity 페이드 없음(backdrop-filter 유지).
- * 뿌연 유리: 밝은 그라데이션 + blur (멀티 레퍼런스 하단 캡슐).
- */
-.page-sub__scroll-hint {
-  position: fixed;
-  z-index: 24;
-  left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  box-sizing: border-box;
-  min-width: min(92vw, 320px);
-  padding: clamp(14px, 2.8vmin, 20px) clamp(22px, 5vw, 36px);
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.22) 0%,
-      rgba(255, 255, 255, 0.08) 45%,
-      rgba(255, 255, 255, 0.16) 100%
-    ),
-    rgba(255, 255, 255, 0.08);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 10px 36px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(16px) saturate(120%);
-  -webkit-backdrop-filter: blur(16px) saturate(120%);
-  text-align: center;
-  pointer-events: none;
-}
-
-.page-sub__scroll-hint-line {
-  margin: 0;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: clamp(0.78rem, 2.1vw, 0.92rem);
-  font-weight: 350;
-  letter-spacing: 0.02em;
-  color: rgba(55, 65, 75, 0.88);
-}
-
-.page-sub__scroll-hint-line--emph {
-  margin-top: 0.2rem;
-  font-size: clamp(0.85rem, 2.35vw, 1rem);
-  font-weight: 500;
-  color: rgba(35, 42, 52, 0.92);
-}
+/* 하단 글래스 캡슐(스크롤 힌트) 제거됨 */
 
 @media (max-width: 768px) {
   .page-sub__title-3d-wrap {
@@ -1215,17 +1642,7 @@ main.page-landing.page-landing--scroll-gravity {
     top: 0;
   }
 
-  .page-sub--lab .page-sub__card-swap-wrap--lab {
-    margin-top: auto;
-    align-self: flex-end;
-    margin-bottom: clamp(0.25rem, 2vh, 1rem);
-    margin-left: auto;
-    margin-right: clamp(8px, 2vw, 24px);
-    left: clamp(-36px, -7vw, -100px);
-    max-width: min(100%, 420px);
-    height: min(540px, 56vh);
-  }
-
+  .page-sub__card-swap-wrap--hub,
   .page-sub__card-swap-wrap--multi-two {
     max-width: min(100%, 520px);
     height: min(700px, 76vh);
@@ -1235,26 +1652,12 @@ main.page-landing.page-landing--scroll-gravity {
     top: 0;
   }
 
-  .page-sub__multi-typo-tl {
+  .page-sub__hub-typo-tl {
     font-size: clamp(2rem, 11vw, 4.5rem);
   }
 
-  .page-sub__multi-typo-br {
+  .page-sub__hub-typo-br {
     font-size: clamp(1.75rem, 9vw, 4rem);
-  }
-
-  .page-sub__scroll-hint {
-    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-    min-width: min(94vw, 300px);
-    padding: 12px 18px;
-  }
-
-  .page-sub__scroll-hint-line {
-    color: rgba(70, 78, 88, 0.9);
-  }
-
-  .page-sub__scroll-hint-line--emph {
-    color: rgba(40, 48, 58, 0.95);
   }
 }
 

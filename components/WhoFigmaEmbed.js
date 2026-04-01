@@ -5,7 +5,7 @@ import { FIGMA_WHO_EMBED_SRC, FIGMA_WHO_PAGE_URL } from '../lib/figmaWhoEmbed';
 
 export default function WhoFigmaEmbed() {
   useLayoutEffect(() => {
-    document.documentElement.classList.remove('flowrium-home', 'hero-revealed', 'flowrium-glass-cursor');
+    document.documentElement.classList.remove('flowrium-home', 'hero-revealed', 'flowrium-home-route');
     document.documentElement.classList.add('page-who-figma-root');
     return () => {
       document.documentElement.classList.remove('page-who-figma-root');

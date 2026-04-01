@@ -3,12 +3,7 @@ import { memorytoneGallery, memorytoneHero } from '../../lib/figmaMcpPortfolioCa
 
 export default function PageLabMemorytone() {
   return (
-    <FigmaMcpCaseLayout
-      headTitle="Lab · Memorytone — flowrium"
-      backHref="/lab"
-      backLabel={'< Lab'}
-      nodeId="834:860"
-    >
+    <FigmaMcpCaseLayout headTitle="Lab · Memorytone — flowrium" nodeId="834:860">
       <h1 className="mcp-case__title">Memorytone</h1>
       <p className="mcp-case__lede">‘여행 기억을 기반으로 음악을 추천해주는 웹’</p>
       <p className="mcp-case__lede">‘Threejs 음악 추천 경험’</p>

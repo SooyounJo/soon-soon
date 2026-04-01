@@ -25,7 +25,7 @@
 /* Lab — 래퍼 안에서 우측 정렬(페이지 우하단 배치와 맞춤) */
 .card-swap-container--flowrium.card-swap-container--lab {
   margin-left: auto;
-  margin-right: 0;
+  margin-right: clamp(10px, 2vw, 26px);
 }
 
 .card--clickable {

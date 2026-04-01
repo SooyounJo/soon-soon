@@ -80,6 +80,8 @@ const CardSwap = ({
   const tlRef = useRef(null);
   const intervalRef = useRef(null);
   const container = useRef(null);
+  const swapRef = useRef(null);
+  const lastWheelAtRef = useRef(0);
 
   useEffect(() => {
     const total = refs.length;
@@ -146,8 +148,28 @@ const CardSwap = ({
       });
     };
 
+    swapRef.current = swap;
     swap();
     intervalRef.current = window.setInterval(swap, delay);
+
+    const onWheel = (e) => {
+      // SubPageShell: 문서 스크롤 대신 카드 넘김
+      const root = document.documentElement;
+      const enabled = root.classList.contains('flowrium-page-sub-no-scroll');
+      if (!enabled) return;
+
+      const dy = e.deltaY;
+      if (Math.abs(dy) < 4) return;
+
+      const now = Date.now();
+      if (now - lastWheelAtRef.current < 420) return;
+      lastWheelAtRef.current = now;
+
+      e.preventDefault();
+      swapRef.current?.();
+      clearInterval(intervalRef.current);
+      intervalRef.current = window.setInterval(swapRef.current, delay);
+    };
 
     if (pauseOnHover) {
       const node = container.current;
@@ -157,17 +179,23 @@ const CardSwap = ({
       };
       const resume = () => {
         tlRef.current?.play();
-        intervalRef.current = window.setInterval(swap, delay);
+        intervalRef.current = window.setInterval(swapRef.current, delay);
       };
       node.addEventListener('mouseenter', pause);
       node.addEventListener('mouseleave', resume);
+      window.addEventListener('wheel', onWheel, { passive: false });
       return () => {
         node.removeEventListener('mouseenter', pause);
         node.removeEventListener('mouseleave', resume);
+        window.removeEventListener('wheel', onWheel);
         clearInterval(intervalRef.current);
       };
     }
-    return () => clearInterval(intervalRef.current);
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      clearInterval(intervalRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- GSAP 타임라인은 마운트 시 시퀀스로 묶임
   }, [cardDistance, verticalDistance, delay, pauseOnHover, skewAmount, easing, childArr.length]);
 

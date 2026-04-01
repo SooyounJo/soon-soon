@@ -2,7 +2,6 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import Head from 'next/head';
 import CircularText from '../components/CircularText';
-import GlassCursorOverlay from '../components/GlassCursorOverlay';
 import LandingGlassDockNav from '../components/LandingGlassDockNav';
 import scrollLandingToView from '../utils/scrollLandingToView';
 
@@ -29,7 +28,7 @@ export default function Home() {
     document.documentElement.classList.add(
       'flowrium-home',
       'hero-revealed',
-      'flowrium-glass-cursor'
+      'flowrium-home-route'
     );
   }, []);
 
@@ -37,14 +36,14 @@ export default function Home() {
     document.documentElement.classList.add(
       'flowrium-home',
       'hero-revealed',
-      'flowrium-glass-cursor'
+      'flowrium-home-route'
     );
 
     return () => {
       document.documentElement.classList.remove(
         'flowrium-home',
         'hero-revealed',
-        'flowrium-glass-cursor'
+        'flowrium-home-route'
       );
     };
   }, []);
@@ -140,7 +139,6 @@ export default function Home() {
           rel="stylesheet"
         />
       </Head>
-      <GlassCursorOverlay />
       {showEntryLoader ? (
         <div
           className={`flowrium-entry-loader${isLoaderLeaving ? ' flowrium-entry-loader--leave' : ''}`}

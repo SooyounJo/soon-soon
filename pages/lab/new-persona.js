@@ -3,12 +3,7 @@ import { newPersonaHero, newPersonaStrip } from '../../lib/figmaMcpPortfolioCase
 
 export default function PageLabNewPersona() {
   return (
-    <FigmaMcpCaseLayout
-      headTitle="Lab · New Persona — flowrium"
-      backHref="/lab"
-      backLabel={'< Lab'}
-      nodeId="834:975"
-    >
+    <FigmaMcpCaseLayout headTitle="Lab · New Persona — flowrium" nodeId="834:975">
       <h1 className="mcp-case__title">New Persona</h1>
       <p className="mcp-case__lede">‘사회 맞춤형 인스턴트 페르소나’</p>
       <p className="mcp-case__lede">‘Threejs 웹사이트 전시’</p>

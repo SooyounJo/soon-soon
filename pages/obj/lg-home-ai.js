@@ -9,12 +9,7 @@ import {
 
 export default function PageLgHomeAi() {
   return (
-    <FigmaMcpCaseLayout
-      headTitle="Multi · LG Home AI — flowrium"
-      backHref="/obj"
-      backLabel={'< Multi'}
-      nodeId="834:776"
-    >
+    <FigmaMcpCaseLayout headTitle="Multi · LG Home AI — flowrium" nodeId="834:776">
       <h1 className="mcp-case__title">LG Home AI</h1>
       <p className="mcp-case__lede">‘집안 공간을 지휘하는 AI 경험’</p>
       <p className="mcp-case__lede">‘모바일 기분 인풋으로 환경이 바뀌는 경험’</p>
