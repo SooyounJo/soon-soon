@@ -22,6 +22,22 @@
   margin-right: auto;
 }
 
+/* Lab — 래퍼 안에서 우측 정렬(페이지 우하단 배치와 맞춤) */
+.card-swap-container--flowrium.card-swap-container--lab {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.card--clickable {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.card--clickable:focus-visible {
+  outline: 2px solid rgba(167, 243, 208, 0.75);
+  outline-offset: 3px;
+}
+
 .card {
   position: absolute;
   top: 50%;
@@ -100,7 +116,8 @@
   object-position: center;
   display: block;
   user-select: none;
-  pointer-events: none;
+  /* View site 커서·호버: hit-test 가 img 에 닿아야 함 (클릭은 버블링으로 카드 유지) */
+  pointer-events: auto;
 }
 
 @media (max-width: 768px) {
@@ -116,6 +133,11 @@
     transform: none;
     width: min(545px, 92vw) !important;
     height: min(563px, 72vh) !important;
+  }
+
+  .card-swap-container--flowrium.card-swap-container--lab {
+    width: min(440px, 88vw) !important;
+    height: min(500px, 58vh) !important;
   }
 }
 
@@ -133,6 +155,11 @@
   .card-swap-container--flowrium.card-swap-container--multi {
     width: min(500px, 94vw) !important;
     height: min(510px, 70vh) !important;
+  }
+
+  .card-swap-container--flowrium.card-swap-container--lab {
+    width: min(400px, 92vw) !important;
+    height: min(460px, 54vh) !important;
   }
 }
 

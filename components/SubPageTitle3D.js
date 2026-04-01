@@ -57,7 +57,8 @@ const GLASS_BASE = {
 /**
  * Hero ExtrudedLetter mode=view 부유 + 포인터 호버 시 살짝 커지고 하이라이트(히어로 타이포와 유사).
  */
-function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
+function FloatingTitleMesh({ text, font, textSize, reduceMotion, strongHover = false }) {
+  const hs = strongHover ? 1.5 : 1;
   const groupRef = useRef(null);
   const matRef = useRef(/** @type {THREE.MeshPhysicalMaterial | null} */ (null));
   const hoverTarget = useRef(0);
@@ -81,7 +82,7 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
       hoverSmoothed.current = THREE.MathUtils.damp(
         hoverSmoothed.current,
         hoverTarget.current,
-        10,
+        strongHover ? 12 : 10,
         delta
       );
     } else {
@@ -90,12 +91,12 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
     const h = hoverSmoothed.current;
 
     if (mat) {
-      mat.envMapIntensity = GLASS_BASE.envMapIntensity + h * 0.28;
-      mat.emissiveIntensity = GLASS_BASE.emissiveIntensity + h * 0.26;
-      mat.clearcoat = GLASS_BASE.clearcoat + h * 0.12;
+      mat.envMapIntensity = GLASS_BASE.envMapIntensity + h * 0.28 * hs;
+      mat.emissiveIntensity = GLASS_BASE.emissiveIntensity + h * 0.26 * hs;
+      mat.clearcoat = GLASS_BASE.clearcoat + h * 0.12 * hs;
     }
 
-    const scaleBoost = 1 + h * 0.045;
+    const scaleBoost = 1 + h * (0.045 + (strongHover ? 0.028 : 0)) * hs;
     g.scale.setScalar(scaleBoost);
 
     if (reduceMotion) {
@@ -129,16 +130,16 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
     const ryIdle = Math.cos(t * 0.66 + a * 1.3) * 0.045 * breath;
     const rzIdle = Math.sin(t * 0.52 + a * 0.77) * 0.038 * breath;
 
-    const hz = h * 0.06;
+    const hz = h * (0.06 + (strongHover ? 0.05 : 0)) * hs;
     g.position.set(
       fx * settle * floatDamp,
       fy * settle * floatDamp,
       fz * settle * floatDamp + hz
     );
     g.rotation.set(
-      assemble * 0 + rxIdle + h * 0.04,
-      assemble * 0 + ryIdle - h * 0.035,
-      assemble * 0 + rzIdle
+      assemble * 0 + rxIdle + h * (0.04 + (strongHover ? 0.035 : 0)) * hs,
+      assemble * 0 + ryIdle - h * (0.035 + (strongHover ? 0.04 : 0)) * hs,
+      assemble * 0 + rzIdle + h * (strongHover ? 0.022 : 0) * hs
     );
   });
 
@@ -193,7 +194,7 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion }) {
   );
 }
 
-function SubPageTitleScene({ text }) {
+function SubPageTitleScene({ text, strongHover = false }) {
   const font = useLoader(TTFLoader, BAGEL_TTF);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -240,6 +241,7 @@ function SubPageTitleScene({ text }) {
         font={font}
         textSize={textSize}
         reduceMotion={reduceMotion}
+        strongHover={strongHover}
       />
     </>
   );
@@ -249,14 +251,14 @@ function SubPageTitleScene({ text }) {
  * 서브페이지 3D 타이틀 — 히어로 `view`와 동일 씬 배경(#000)·조명·GlassTransmission·톤매핑.
  * (투명 캔버스는 physical transmission 이 화면 밖을 굴절할 때 회색/무광처럼 보임)
  */
-export default function SubPageTitle3D({ text }) {
+export default function SubPageTitle3D({ text, strongHover = false }) {
   const meshText = titleFor3D(text);
   if (!meshText) return null;
 
   return (
     <WebGLSceneBoundary fallback={null}>
       <Canvas
-        className="page-sub__title-3d-canvas"
+        className={`page-sub__title-3d-canvas${strongHover ? ' page-sub__title-3d-canvas--hoverable' : ''}`}
         frameloop="always"
         resize={{ debounce: 120, scroll: false }}
         camera={{ position: [0, 0.06, 14.25], fov: 44 }}
@@ -276,7 +278,7 @@ export default function SubPageTitle3D({ text }) {
         }}
       >
         <Suspense fallback={null}>
-          <SubPageTitleScene text={meshText} />
+          <SubPageTitleScene text={meshText} strongHover={strongHover} />
         </Suspense>
       </Canvas>
     </WebGLSceneBoundary>

@@ -13,21 +13,29 @@ const CARDS = [
     id: 'lab-memorytone',
     imageSrc: memorytone.src,
     imageAlt: 'Memorytone — portable record player',
+    href: '/lab/memorytone',
   },
   {
     id: 'lab-flowrium',
     imageSrc: flowrium.src,
     imageAlt: 'Flowrium — moss and flowers',
+    href: '/lab/flowrium',
   },
   {
     id: 'lab-new-persona',
     imageSrc: newPersona.src,
     imageAlt: 'New Persona',
+    href: '/lab/new-persona',
   },
 ];
 
 export default function PageLab() {
   return (
-    <SubPageShell headTitle=">Lab — flowrium" title=">Lab" cards={CARDS} />
+    <SubPageShell
+      headTitle=">Lab — flowrium"
+      title=">Lab"
+      cards={CARDS}
+      variant="lab"
+    />
   );
 }

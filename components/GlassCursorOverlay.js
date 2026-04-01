@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useVideoTbcActive } from '../contexts/VideoDockCursorContext';
 import scrollLandingToView from '../utils/scrollLandingToView';
 
 /**
@@ -7,6 +8,7 @@ import scrollLandingToView from '../utils/scrollLandingToView';
  */
 export default function GlassCursorOverlay() {
   const SCROLL_TO_RING_THRESHOLD = 6;
+  const videoTbcActive = useVideoTbcActive();
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
   const [hasPointer, setHasPointer] = useState(false);
   const [showLandingCapsule, setShowLandingCapsule] = useState(true);
@@ -27,6 +29,10 @@ export default function GlassCursorOverlay() {
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
+
+  if (videoTbcActive) {
+    return null;
+  }
 
   return (
     <div

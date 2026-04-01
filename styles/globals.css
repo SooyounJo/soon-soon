@@ -33,6 +33,34 @@ html {
   overflow-y: auto;
 }
 
+/* MCP 케이스·2d 상세·SubPageShell — 문서 스크롤 없음(단일 뷰포트) */
+html.flowrium-mcp-detail,
+html.flowrium-mcp-detail body,
+html.flowrium-mcp-detail #__next,
+html.flowrium-page-sub-no-scroll,
+html.flowrium-page-sub-no-scroll body,
+html.flowrium-page-sub-no-scroll #__next {
+  overflow: hidden !important;
+  height: 100%;
+  max-height: 100dvh;
+}
+
+html.flowrium-page-sub-no-scroll .page-sub.page-sub--glass {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* /who Figma — 바깥 스크롤 없음, 내부 패널만 스크롤 */
+html.page-who-figma-root,
+html.page-who-figma-root body,
+html.page-who-figma-root #__next {
+  overflow: hidden !important;
+  height: 100%;
+  max-height: 100dvh;
+}
+
 /* 메인: 스크롤은 쓰되 스크롤바만 숨김 */
 html.flowrium-home {
   overflow-x: hidden;
@@ -60,6 +88,17 @@ body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   background: #000000;
   color: #ffffff;
+}
+
+/* 입력 필드 거의 없음 — 텍스트 삽입 캐럿(깜빡임) 비표시 */
+html,
+body,
+input,
+textarea,
+select,
+[contenteditable='true'],
+[contenteditable=''] {
+  caret-color: transparent;
 }
 
 .bagel-fat-one-regular {
@@ -479,6 +518,131 @@ html.flowrium-glass-cursor body {
   opacity: 0.92;
 }
 
+/* 세부 페이지(.mcp-case, Lab 카드 미디어) 이미지 호버 — 글래스 라벨 (랜딩 스크롤 링 톤) */
+.mcp-case-view-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  will-change: transform, opacity;
+}
+
+.mcp-case-view-cursor--visible {
+  opacity: 0.94;
+}
+
+.mcp-case-view-cursor__inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translate(-50%, -50%);
+  padding: 6px 14px 6px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  background: radial-gradient(
+    circle at 28% 22%,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.07) 58%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -6px 12px rgba(255, 255, 255, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px) saturate(122%);
+  -webkit-backdrop-filter: blur(14px) saturate(122%);
+}
+
+.mcp-case-view-cursor__ring {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: radial-gradient(
+    circle at 32% 26%,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.08) 55%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mcp-case-view-cursor__label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+}
+
+.mcp-case img,
+.card--media img {
+  cursor: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcp-case-view-cursor {
+    display: none !important;
+  }
+
+  .mcp-case img,
+  .card--media img {
+    cursor: auto;
+  }
+}
+
+/* 랜딩 >Video 클릭 후 3초 — 필 커서 (도크 캡슐 톤) */
+html.flowrium-video-tbc-active,
+html.flowrium-video-tbc-active body {
+  cursor: none !important;
+}
+
+.flowrium-video-tbc-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100002;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.flowrium-video-tbc-cursor__inner {
+  transform: translate(-50%, -50%);
+  padding: clamp(10px, 1.8vmin, 14px) clamp(18px, 3vw, 28px);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.03) 50%,
+      rgba(255, 255, 255, 0.08) 100%
+    ),
+    rgba(10, 10, 12, 0.94);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+.flowrium-video-tbc-cursor__label {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: clamp(14px, 1.8vw, 20px);
+  font-weight: 200;
+  font-variation-settings: 'wght' 200;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.96);
+  white-space: nowrap;
+}
+
 :root {
   --flowrium-mint-bg: #000000;
 }
@@ -724,6 +888,11 @@ main.page-landing.page-landing--scroll-gravity {
   outline-offset: 3px;
 }
 
+.landing-glass-dock__btn--disabled {
+  opacity: 0.42;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-glass-dock {
     transition: bottom 0.35s ease, visibility 0s linear 0.2s;
@@ -789,6 +958,20 @@ main.page-landing.page-landing--scroll-gravity {
   cursor: grabbing;
 }
 
+/* Lab — 3D 타이포 호버 강조 시 포인터(메시 hit 영역) */
+.page-sub__title-3d-canvas--hoverable {
+  cursor: pointer;
+}
+
+.page-sub__title-3d-canvas--hoverable:active {
+  cursor: pointer;
+}
+
+/* Lab — 타이포와 레이어 맞춤(카드가 위에 올라 겹침) */
+.page-sub--lab .page-sub__title-3d-wrap--lab {
+  z-index: 1;
+}
+
 .page-sub__back {
   position: relative;
   z-index: 20;
@@ -832,6 +1015,29 @@ main.page-landing.page-landing--scroll-gravity {
   margin-top: clamp(1.25rem, 4vh, 3rem);
   left: clamp(88px, 12vw, 200px);
   top: clamp(20px, 3.5vh, 48px);
+}
+
+/* Lab — 스택 축소 + 메인 flex 로 카드 영역만 뷰포트 하단·우측 */
+.page-sub--lab {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-sub--lab .page-sub__card-swap-wrap--lab {
+  position: relative;
+  margin: 0;
+  margin-top: auto;
+  align-self: flex-end;
+  margin-bottom: clamp(0.2rem, 1.2vh, 0.85rem);
+  margin-left: auto;
+  margin-right: clamp(12px, 2.5vw, 36px);
+  left: clamp(-56px, -10vw, -168px);
+  top: 0;
+  max-width: min(100%, 460px);
+  height: min(600px, 64vh);
+  z-index: 10;
 }
 
 .page-sub__card-swap-wrap .card__eyebrow {
@@ -1007,6 +1213,17 @@ main.page-landing.page-landing--scroll-gravity {
     margin: clamp(1.25rem, 4vh, 2rem) auto 0;
     left: 0;
     top: 0;
+  }
+
+  .page-sub--lab .page-sub__card-swap-wrap--lab {
+    margin-top: auto;
+    align-self: flex-end;
+    margin-bottom: clamp(0.25rem, 2vh, 1rem);
+    margin-left: auto;
+    margin-right: clamp(8px, 2vw, 24px);
+    left: clamp(-36px, -7vw, -100px);
+    max-width: min(100%, 420px);
+    height: min(540px, 56vh);
   }
 
   .page-sub__card-swap-wrap--multi-two {
@@ -1487,4 +1704,78 @@ main.page-landing.page-landing--scroll-gravity {
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
   }
+}
+
+/* /who — Figma MCP 노드 848:1243 임베드 (스크롤 가능, 페이지 스크롤바 숨김) */
+html.page-who-figma-root,
+html.page-who-figma-root body {
+  margin: 0;
+  min-height: 100%;
+  background: #050508;
+}
+
+.page-who-figma {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  margin: 0;
+  box-sizing: border-box;
+  background: #050508;
+  color: rgba(247, 251, 255, 0.95);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.page-who-figma__bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: clamp(10px, 2vw, 14px) clamp(14px, 3vw, 22px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 2;
+}
+
+.page-who-figma__back,
+.page-who-figma__open {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.page-who-figma__back:hover,
+.page-who-figma__open:hover {
+  color: #fff;
+}
+
+.page-who-figma__open {
+  opacity: 0.82;
+}
+
+.page-who-figma__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.page-who-figma__scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.page-who-figma__iframe {
+  display: block;
+  width: 100%;
+  /* 긴 이력 프레임 — 바깥 스크롤(스크롤바 숨김)로 탐색 */
+  min-height: clamp(2000px, 300vh, 5200px);
+  height: clamp(2000px, 300vh, 5200px);
+  border: 0;
+  background: #0a0a0c;
 }

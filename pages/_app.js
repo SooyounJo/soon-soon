@@ -1,9 +1,13 @@
 import '../styles/globals.css';
+import '../styles/mobile-case-figma-mcp.css';
 import '../components/CardSwap.css';
+import McpCaseViewCursor from '../components/McpCaseViewCursor';
+import VideoTbcCursor from '../components/VideoTbcCursor';
+import { VideoDockCursorProvider } from '../contexts/VideoDockCursorContext';
 
 export default function App({ Component, pageProps }) {
   return (
-    <>
+    <VideoDockCursorProvider>
       {/* 방향성 블러(가로/세로 stdDeviation 다름) + 교차 패스로 물 스며듦 느낌 */}
       <svg
         width="0"
@@ -36,7 +40,9 @@ export default function App({ Component, pageProps }) {
           </filter>
         </defs>
       </svg>
+      <McpCaseViewCursor />
+      <VideoTbcCursor />
       <Component {...pageProps} />
-    </>
+    </VideoDockCursorProvider>
   );
 }

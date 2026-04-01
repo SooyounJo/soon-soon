@@ -1,18 +1,20 @@
 import SubPageShell from '../components/SubPageShell';
 
-/** 각 카드: eyebrow · title · body 세 블록 / 마지막 카드만 To be continued */
+/** 각 카드: eyebrow · title · body / 앞 두 카드는 클릭 시 Figma 세부 페이지 */
 const CARDS = [
   {
     id: 'm1',
-    eyebrow: 'Touch · Viewport',
-    title: 'Mobile first',
-    body: '작은 화면에서 제스처·안전 영역·가독성을 기본 전제로 레이아웃을 잡습니다.',
+    eyebrow: 'Mobile',
+    title: 'Naver',
+    body: '네이버 방향 UI — Figma 프로토타입을 이 페이지에서 바로 확인합니다.',
+    href: '/2d/naver',
   },
   {
     id: 'm2',
-    eyebrow: 'Typography · Motion',
-    title: '2D surface',
-    body: '평면 안에서 깊이가 느껴지도록 타이포 계층과 미세한 모션이 맞물리게 합니다.',
+    eyebrow: 'Mobile',
+    title: 'Manpa',
+    body: '만파 방향 UI — Figma 디자인을 반응형 임베드로 봅니다.',
+    href: '/2d/manpa',
   },
   {
     id: 'm3',
@@ -21,5 +23,12 @@ const CARDS = [
 ];
 
 export default function Page2D() {
-  return <SubPageShell headTitle=">Mobile — flowrium" title=">Mobile" cards={CARDS} />;
+  return (
+    <SubPageShell
+      headTitle=">Mobile — flowrium"
+      title=">Mobile"
+      cards={CARDS}
+      variant="mobile"
+    />
+  );
 }

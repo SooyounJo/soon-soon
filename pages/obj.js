@@ -13,11 +13,13 @@ const CARDS = [
     id: 'multi-exhibition',
     imageSrc: cardExhibitionGrid.src,
     imageAlt: 'Multi — exhibition card on thumbnail grid',
+    href: '/obj/platform-l',
   },
   {
     id: 'multi-memorytone',
     imageSrc: cardMemorytoneHarmonic.src,
     imageAlt: 'Multi — Memorytone harmonic card',
+    href: '/obj/lg-home-ai',
   },
 ];
 

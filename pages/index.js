@@ -186,9 +186,9 @@ export default function Home() {
                 SooYoun Jo
               </span>
               <span className="landing-hero-chrome-line landing-hero-chrome-line--corner landing-hero-chrome-line--end landing-hero-chrome-line--wobble">
-                Code &amp; Tech Design
-                <br />
                 UI &amp; UX Design
+                <br />
+                Code &amp; Tech Design
               </span>
             </div>
           </div>
