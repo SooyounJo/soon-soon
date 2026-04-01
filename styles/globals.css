@@ -665,6 +665,20 @@ html.flowrium-mcp-view-cursor-active .flowrium-glass-cursor-webgl {
   pointer-events: none;
 }
 
+.flowrium-entry-loader--route {
+  pointer-events: auto;
+}
+
+.flowrium-entry-loader--route * {
+  cursor: none !important;
+}
+
+html.flowrium-route-loading .flowrium-glass-cursor-webgl,
+html.flowrium-route-loading .mcp-case-view-cursor,
+html.flowrium-route-loading .flowrium-video-tbc-cursor {
+  opacity: 0 !important;
+}
+
 .flowrium-entry-loader--leave {
   opacity: 0;
   transform: scale(1.015);

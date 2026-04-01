@@ -4,6 +4,7 @@ import '../components/CardSwap.css';
 import McpCaseViewCursor from '../components/McpCaseViewCursor';
 import VideoTbcCursor from '../components/VideoTbcCursor';
 import GlassCursorOverlay from '../components/GlassCursorOverlay';
+import RouteTransitionLoader from '../components/RouteTransitionLoader';
 import { VideoDockCursorProvider } from '../contexts/VideoDockCursorContext';
 import { useLayoutEffect } from 'react';
 
@@ -47,6 +48,7 @@ export default function App({ Component, pageProps }) {
           </filter>
         </defs>
       </svg>
+      <RouteTransitionLoader />
       <GlassCursorOverlay />
       <McpCaseViewCursor />
       <VideoTbcCursor />
