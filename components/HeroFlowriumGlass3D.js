@@ -7,6 +7,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import {
@@ -70,7 +71,7 @@ const LETTER_SCATTER = 2.35;
 const DROPLET_FLOOR_Y = -5.85;
 
 /** soon 위 · view 아래(세로 스택). 스크롤 p↑ → 씬 패닝으로 view가 화면 중앙으로 */
-const TYPO_SOON_LOCAL_Y = 1.18;
+const TYPO_SOON_LOCAL_Y = 0.92;
 /** view `Text3D` 그룹 로컬 Y — soon 스택 대비 상대 위치만 */
 const TYPO_VIEW_LOCAL_Y = 0.38;
 /** 첫 프레임 pan 기준 */
@@ -126,13 +127,13 @@ const LINES_SOON = ['soon', '-', 'soon'];
 const LINES_VIEW = ['view'];
 
 /** 입체 스케일 — soon / view 분리(view는 스크롤 후 화면을 크게 채움) */
-const TEXT_SIZE_SOON = 1.48;
+const TEXT_SIZE_SOON = 2.42;
 /** 뷰포트 밖 잘림 방지 — 필요 시 VIEW_AT_REST_WORLD_Y 와 함께 조정 */
 const TEXT_SIZE_VIEW = 3.52;
 /** ExtrudedLetter 베벨·익스트루드 기준 */
 const TEXT_SIZE_BASE = TEXT_SIZE_SOON;
 /** 줄 사이(라인 중심 간격) */
-const LINE_STEP_EM = 1.18;
+const LINE_STEP_EM = 0.72;
 /** Text3D Z 익스트루드 */
 const EXTRUDE_DEPTH = 0.175;
 const BEVEL_THICKNESS = 0.062;
@@ -239,6 +240,9 @@ const PointerRepelContext = createContext(
   )
 );
 
+/** 모바일 등 coarse pointer에서 품질/빈도 다운 */
+const PerfContext = createContext({ coarse: false });
+
 function PointerRepelBinder({ children }) {
   const cursorHit = useRef(new THREE.Vector3());
   const valid = useRef(false);
@@ -283,10 +287,18 @@ function KickScatterBridge({ children }) {
 function KickDemandInvalidate() {
   const api = useContext(KickScatterContext);
   const invalidate = useThree((s) => s.invalidate);
+  const { coarse } = useContext(PerfContext);
+  const lastRef = useRef(0);
   useFrame((state) => {
     if (!api) return;
     const dt = state.clock.elapsedTime - api.kickRef.current.startT;
-    if (dt > 0.015 && dt < 2.9) invalidate();
+    if (dt <= 0.015 || dt >= 2.9) return;
+
+    const now = performance.now();
+    const fps = coarse ? 24 : 45;
+    if (now - lastRef.current < 1000 / fps) return;
+    lastRef.current = now;
+    invalidate();
   });
   return null;
 }
@@ -443,6 +455,7 @@ function RefitBoundsAfterLoad({ mode }) {
 
 /** 물방울 — 물에 가깝게(IOR·톤), 구는 살짝 찌그러진 물방울 형태 */
 function DropletMaterial() {
+  const { coarse } = useContext(PerfContext);
   return (
     <MeshTransmissionMaterial
       backside
@@ -451,13 +464,13 @@ function DropletMaterial() {
       roughness={0.032}
       ior={1.333}
       color="#f8fbff"
-      chromaticAberration={0.028}
-      anisotropicBlur={0.012}
-      distortion={0.12}
-      distortionScale={0.24}
-      temporalDistortion={0.09}
-      samples={5}
-      resolution={160}
+      chromaticAberration={coarse ? 0.014 : 0.028}
+      anisotropicBlur={coarse ? 0.006 : 0.012}
+      distortion={coarse ? 0.08 : 0.12}
+      distortionScale={coarse ? 0.18 : 0.24}
+      temporalDistortion={coarse ? 0.05 : 0.09}
+      samples={coarse ? 2 : 4}
+      resolution={coarse ? 96 : 144}
     />
   );
 }
@@ -492,6 +505,7 @@ function ExtrudedLetter({
   mode = 'soon',
   textSize = TEXT_SIZE_SOON,
 }) {
+  const { coarse } = useContext(PerfContext);
   const groupRef = useRef(null);
   const basePos = useRef(new THREE.Vector3(...position));
   const scrollFallRef = useContext(ScrollFallContext);
@@ -668,12 +682,12 @@ function ExtrudedLetter({
           height={EXTRUDE_DEPTH * extrudeScale}
           letterSpacing={0}
           lineHeight={1}
-          curveSegments={CURVE_SEGMENTS}
-          bevelEnabled
-          bevelThickness={BEVEL_THICKNESS * extrudeScale}
-          bevelSize={BEVEL_SIZE * extrudeScale}
+          curveSegments={coarse ? 4 : CURVE_SEGMENTS}
+          bevelEnabled={!coarse}
+          bevelThickness={coarse ? 0 : BEVEL_THICKNESS * extrudeScale}
+          bevelSize={coarse ? 0 : BEVEL_SIZE * extrudeScale}
           bevelOffset={0}
-          bevelSegments={BEVEL_SEGMENTS}
+          bevelSegments={coarse ? 0 : BEVEL_SEGMENTS}
           onPointerOver={(e) => {
             e.stopPropagation();
             hoverRef.current = 1;
@@ -696,21 +710,34 @@ function ExtrudedLetter({
 }
 
 function WaterDropletsField() {
+  const { coarse } = useContext(PerfContext);
   const scrollFallRef = useContext(ScrollFallContext);
+  const droplets = useMemo(
+    () => (coarse ? WATER_DROPLETS.slice(0, 10) : WATER_DROPLETS),
+    [coarse]
+  );
   const stateRef = useRef(
-    WATER_DROPLETS.map((o, i) => ({
+    droplets.map((o, i) => ({
       base: new THREE.Vector3(o.base[0], o.base[1], o.base[2]),
       ph: o.ph,
       r: o.r,
       mesh: /** @type {THREE.Mesh | null} */ (null),
       /** 0~1: 위→아래 진행, 넘치면 다시 위에서 */
-      fall: (i / Math.max(1, WATER_DROPLETS.length) + o.ph[1] * 0.07) % 1,
+      fall: (i / Math.max(1, droplets.length) + o.ph[1] * 0.07) % 1,
       /** 낙하 속도 (방울마다 조금씩 다름, 전체적으로 느리게) */
       speed: 0.1 + (o.ph[0] % 1) * 0.06 + (i % 4) * 0.018,
     }))
   );
+  const coarseAccumRef = useRef(0);
 
   useFrame((state, delta) => {
+    // 모바일에서는 업데이트 빈도를 낮춰 CPU/GPU 비용 절감
+    if (coarse) {
+      coarseAccumRef.current += delta;
+      if (coarseAccumRef.current < 1 / 20) return;
+      delta = coarseAccumRef.current;
+      coarseAccumRef.current = 0;
+    }
     const t = state.clock.elapsedTime;
     const p = scrollFallRef.current;
     const e1 = scrollPhase1Ease(p);
@@ -764,7 +791,7 @@ function WaterDropletsField() {
 
   return (
     <group>
-      {WATER_DROPLETS.map((o, i) => (
+      {droplets.map((o, i) => (
         <mesh
           key={i}
           ref={(el) => {
@@ -773,7 +800,7 @@ function WaterDropletsField() {
           castShadow={false}
           receiveShadow={false}
         >
-          <sphereGeometry args={[o.r, 12, 12]} />
+          <sphereGeometry args={[o.r, coarse ? 8 : 10, coarse ? 8 : 10]} />
           <DropletMaterial />
         </mesh>
       ))}
@@ -1066,9 +1093,16 @@ function OrbitBoundsPadding() {
 function DemandSceneInvalidate() {
   const scrollRef = useContext(ScrollFallContext);
   const invalidate = useThree((s) => s.invalidate);
+  const { coarse } = useContext(PerfContext);
+  const lastRef = useRef(0);
   useFrame(() => {
     const p = scrollRef.current;
-    if (p < 0.999) invalidate();
+    if (p >= 0.999) return;
+    const now = performance.now();
+    const fps = coarse ? 24 : 45;
+    if (now - lastRef.current < 1000 / fps) return;
+    lastRef.current = now;
+    invalidate();
   });
   return null;
 }
@@ -1138,6 +1172,24 @@ function HeroViewBlock() {
 }
 
 export default function HeroFlowriumGlass3D({ onReady }) {
+  const [isCoarsePointer, setIsCoarsePointer] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return Boolean(window.matchMedia('(pointer: coarse)').matches);
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia('(pointer: coarse)');
+    const onChange = () => setIsCoarsePointer(Boolean(mq.matches));
+    onChange();
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', onChange);
+      return () => mq.removeEventListener('change', onChange);
+    }
+    mq.addListener(onChange);
+    return () => mq.removeListener(onChange);
+  }, []);
+
   const onHeroStable = useCallback(() => {
     if (typeof document !== 'undefined') {
       document
@@ -1172,12 +1224,12 @@ export default function HeroFlowriumGlass3D({ onReady }) {
           camera={{ position: [0, 0.06, 10.35], fov: 44 }}
           gl={{
             alpha: false,
-            antialias: true,
-            powerPreference: 'high-performance',
+            antialias: !isCoarsePointer,
+            powerPreference: isCoarsePointer ? 'low-power' : 'high-performance',
             stencil: false,
             failIfMajorPerformanceCaveat: false,
           }}
-          dpr={1}
+          dpr={isCoarsePointer ? 0.85 : 0.95}
           onCreated={({ gl, invalidate }) => {
             gl.setClearColor(SCENE_CLEAR_HEX, 1);
             gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1185,34 +1237,41 @@ export default function HeroFlowriumGlass3D({ onReady }) {
             invalidate();
           }}
         >
-          <SceneSolidBackdrop />
-          <ambientLight intensity={0.42} />
-          <directionalLight
-            position={[-9, 11, 6]}
-            intensity={3.85}
-            color="#ffffff"
-            castShadow={false}
-          />
-          <directionalLight position={[7.5, -3, 5.5]} intensity={1.52} color="#e8f0ff" />
-          <directionalLight position={[0.5, 6, 9]} intensity={1.35} color="#fff8f0" />
-          <pointLight position={[-5.5, 8.5, 6.5]} intensity={1.72} color="#ffffff" />
-          <pointLight position={[6, 4, 7]} intensity={0.95} color="#dff5ff" />
-          <hemisphereLight args={['#f6f9ff', '#1a1e1c', 0.88]} />
-          <ScrollFallBridge>
-            <KickScatterBridge>
-              <PointerRepelBinder>
-                <KickDemandInvalidate />
-                <DemandSceneInvalidate />
-                <Suspense fallback={null}>
-                  <DemandBootFrames />
-                  <Environment preset="studio" environmentIntensity={1.48} resolution={56} frames={6} />
-                  <HeroViewBlock />
-                </Suspense>
-                <ScrollMappedOverlays />
-              </PointerRepelBinder>
-            </KickScatterBridge>
-          </ScrollFallBridge>
-          <HeroStableNotifier onStable={onHeroStable} />
+          <PerfContext.Provider value={{ coarse: isCoarsePointer }}>
+            <SceneSolidBackdrop />
+            <ambientLight intensity={0.42} />
+            <directionalLight
+              position={[-9, 11, 6]}
+              intensity={3.85}
+              color="#ffffff"
+              castShadow={false}
+            />
+            <directionalLight position={[7.5, -3, 5.5]} intensity={1.52} color="#e8f0ff" />
+            <directionalLight position={[0.5, 6, 9]} intensity={1.35} color="#fff8f0" />
+            <pointLight position={[-5.5, 8.5, 6.5]} intensity={1.72} color="#ffffff" />
+            <pointLight position={[6, 4, 7]} intensity={0.95} color="#dff5ff" />
+            <hemisphereLight args={['#f6f9ff', '#1a1e1c', 0.88]} />
+            <ScrollFallBridge>
+              <KickScatterBridge>
+                <PointerRepelBinder>
+                  <KickDemandInvalidate />
+                  <DemandSceneInvalidate />
+                  <Suspense fallback={null}>
+                    <DemandBootFrames />
+                    <Environment
+                      preset="studio"
+                      environmentIntensity={1.48}
+                    resolution={isCoarsePointer ? 32 : 48}
+                    frames={isCoarsePointer ? 3 : 4}
+                    />
+                    <HeroViewBlock />
+                  </Suspense>
+                  <ScrollMappedOverlays />
+                </PointerRepelBinder>
+              </KickScatterBridge>
+            </ScrollFallBridge>
+            <HeroStableNotifier onStable={onHeroStable} />
+          </PerfContext.Provider>
         </Canvas>
       </WebGLSceneBoundary>
     </div>

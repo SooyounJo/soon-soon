@@ -12,6 +12,8 @@ export default function SubPageShell({ headTitle, title, cards = [], variant, ch
   const lab = variant === 'lab';
   const mobile = variant === 'mobile';
   const hub = multiTwo || lab || mobile;
+  const hubCardDelay = hub ? 1000 : 5000;
+  const hubPauseOnHover = hub ? false : false;
 
   const hubTypo = hub
     ? {
@@ -61,8 +63,9 @@ export default function SubPageShell({ headTitle, title, cards = [], variant, ch
               height={multiTwo ? 620 : lab ? 640 : 640}
               cardDistance={multiTwo ? 76 : lab ? 62 : 68}
               verticalDistance={multiTwo ? 88 : lab ? 74 : 78}
-              delay={mobile || multiTwo || lab ? 8000 : 5000}
-              pauseOnHover={mobile || multiTwo || lab}
+              delay={hubCardDelay}
+              pauseOnHover={hubPauseOnHover}
+              enableWheel={!hub}
               skewAmount={multiTwo ? 14 : 6}
             >
               {cards.map((c) => (

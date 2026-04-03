@@ -42,6 +42,7 @@ const CardSwap = ({
   verticalDistance = 70,
   delay = 5000,
   pauseOnHover = false,
+  enableWheel = true,
   onCardClick,
   skewAmount = 6,
   easing = 'elastic',
@@ -153,6 +154,7 @@ const CardSwap = ({
     intervalRef.current = window.setInterval(swap, delay);
 
     const onWheel = (e) => {
+      if (!enableWheel) return;
       // SubPageShell: 문서 스크롤 대신 카드 넘김
       const root = document.documentElement;
       const enabled = root.classList.contains('flowrium-page-sub-no-scroll');
@@ -183,21 +185,21 @@ const CardSwap = ({
       };
       node.addEventListener('mouseenter', pause);
       node.addEventListener('mouseleave', resume);
-      window.addEventListener('wheel', onWheel, { passive: false });
+      if (enableWheel) window.addEventListener('wheel', onWheel, { passive: false });
       return () => {
         node.removeEventListener('mouseenter', pause);
         node.removeEventListener('mouseleave', resume);
-        window.removeEventListener('wheel', onWheel);
+        if (enableWheel) window.removeEventListener('wheel', onWheel);
         clearInterval(intervalRef.current);
       };
     }
-    window.addEventListener('wheel', onWheel, { passive: false });
+    if (enableWheel) window.addEventListener('wheel', onWheel, { passive: false });
     return () => {
-      window.removeEventListener('wheel', onWheel);
+      if (enableWheel) window.removeEventListener('wheel', onWheel);
       clearInterval(intervalRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- GSAP 타임라인은 마운트 시 시퀀스로 묶임
-  }, [cardDistance, verticalDistance, delay, pauseOnHover, skewAmount, easing, childArr.length]);
+  }, [cardDistance, verticalDistance, delay, pauseOnHover, enableWheel, skewAmount, easing, childArr.length]);
 
   const rendered = childArr.map((child, i) =>
     isValidElement(child)

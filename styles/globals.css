@@ -542,6 +542,14 @@ main.page-landing
   touch-action: none;
 }
 
+/* 모바일(터치)에서는 손가락 스크롤 우선 + 이벤트 비용 절감 */
+@media (pointer: coarse) {
+  .hero-flowrium-glass-root canvas {
+    touch-action: pan-y;
+    pointer-events: none;
+  }
+}
+
 main.page-landing .hero-flowrium-wordmark-glass.hero-flowrium-wordmark-fallback {
   position: relative;
   z-index: 0;
@@ -590,7 +598,7 @@ main.page-landing
   white-space: normal;
   max-width: min(96vw, 1200px);
   width: 100%;
-  font-size: clamp(5rem, 14.5vw, 132px);
+  font-size: clamp(5.75rem, 16vw, 160px);
   line-height: 0.92;
   letter-spacing: -0.04em;
 }
@@ -1082,8 +1090,9 @@ main.page-landing.page-landing--scroll-gravity {
 .landing-glass-dock__brick {
   display: grid;
   grid-template-columns: repeat(6, max-content);
-  row-gap: clamp(8px, 1.4vmin, 14px);
-  column-gap: clamp(8px, 1.4vw, 18px);
+  /* 버튼 스트로크가 살짝 붙는 느낌 */
+  row-gap: clamp(0px, 0.55vmin, 8px);
+  column-gap: clamp(0px, 0.6vw, 10px);
   justify-content: center;
   align-items: center;
 }
@@ -1126,8 +1135,8 @@ main.page-landing.page-landing--scroll-gravity {
   }
 
   .landing-glass-dock__brick {
-    row-gap: clamp(6px, 1.2vmin, 12px);
-    column-gap: clamp(4px, 1.2vw, 12px);
+    row-gap: clamp(0px, 0.7vmin, 8px);
+    column-gap: clamp(0px, 0.9vw, 10px);
   }
 }
 
@@ -1135,8 +1144,57 @@ main.page-landing.page-landing--scroll-gravity {
   position: relative;
   display: block;
   flex: 0 0 auto;
-  transform: none;
-  will-change: auto;
+  --landing-dock-rot: 0deg;
+  --landing-dock-tx: 0px;
+  --landing-dock-ty: 0px;
+  --landing-dock-ox: 50%;
+  --landing-dock-oy: 50%;
+  /* 살짝 겹치게 해서 스트로크가 붙도록 */
+  margin: calc(-1 * clamp(2px, 0.55vw, 8px));
+  transform-origin: var(--landing-dock-ox) var(--landing-dock-oy);
+  transform: translate3d(var(--landing-dock-tx), var(--landing-dock-ty), 0) rotate(var(--landing-dock-rot));
+  will-change: transform;
+}
+
+/* 캡슐 각도: 중심 회전이 아니라 축/오프셋을 각자 다르게(와리가리) */
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(1) {
+  --landing-dock-rot: -16deg;
+  --landing-dock-ox: 18%;
+  --landing-dock-oy: 86%;
+  --landing-dock-tx: -32px;
+  --landing-dock-ty: 18px;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(2) {
+  --landing-dock-rot: 12.5deg;
+  --landing-dock-ox: 92%;
+  --landing-dock-oy: 22%;
+  --landing-dock-tx: 26px;
+  --landing-dock-ty: -18px;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(3) {
+  --landing-dock-rot: -10.5deg;
+  --landing-dock-ox: 26%;
+  --landing-dock-oy: 36%;
+  --landing-dock-tx: -40px;
+  --landing-dock-ty: 14px;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(4) {
+  --landing-dock-rot: 8deg;
+  --landing-dock-ox: 58%;
+  --landing-dock-oy: 92%;
+  --landing-dock-tx: 14px;
+  --landing-dock-ty: 24px;
+}
+
+.landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(5) {
+  --landing-dock-rot: -14deg;
+  --landing-dock-ox: 88%;
+  --landing-dock-oy: 68%;
+  --landing-dock-tx: 34px;
+  --landing-dock-ty: 16px;
 }
 
 /*
@@ -1624,12 +1682,31 @@ main.page-landing.page-landing--scroll-gravity {
   top: clamp(12px, 2.5vh, 36px);
 }
 
-.page-sub--hub .page-sub__title-3d-wrap,
+/* Hub: 좌/상단 레이어 제거 + 카드에 집중 */
+.page-sub--hub .page-sub__title-3d-wrap {
+  display: none;
+}
+
+.page-sub--hub .page-sub__back {
+  display: none;
+}
+
+.page-sub--hub .page-sub__hub-typo-tl {
+  display: none;
+}
+
+/* Hub 카드 영역은 중앙 정렬 */
+.page-sub--hub .page-sub__card-swap-wrap--hub {
+  left: 0;
+  top: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .page-sub--multi-two .page-sub__title-3d-wrap {
   z-index: 2;
 }
 
-.page-sub--hub .page-sub__back,
 .page-sub--multi-two .page-sub__back {
   z-index: 22;
 }
@@ -1699,7 +1776,7 @@ main.page-landing.page-landing--scroll-gravity {
     calc(clamp(36px, 6vmin, 88px) + env(safe-area-inset-left, 0px));
   pointer-events: none;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: clamp(16px, 2.05vw, 46px);
+  font-size: clamp(14px, 1.75vw, 40px);
   font-weight: 200;
   font-variation-settings: 'wght' 200;
   letter-spacing: 0;
