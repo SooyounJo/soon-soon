@@ -1,7 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useLayoutEffect } from 'react';
-import { FIGMA_WHO_PAGE_URL } from '../lib/figmaWhoEmbed';
 
 export default function WhoMcpCss() {
   useLayoutEffect(() => {
@@ -19,20 +18,9 @@ export default function WhoMcpCss() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <main className="page-who-mcp">
-        <header className="page-who-mcp__bar">
-          <Link className="page-who-mcp__back" href="/">
-            {'< Home'}
-          </Link>
-          <a
-            className="page-who-mcp__open"
-            href={FIGMA_WHO_PAGE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open in Figma
-          </a>
-        </header>
-
+        <Link className="page-who-mcp__back page-who-mcp__back--solo" href="/">
+          {'< Home'}
+        </Link>
         <div className="page-who-mcp__scroll">
           <div className="who-mcp" data-node-id="848:1243">
             <div className="who-mcp__top-gradient" aria-hidden />

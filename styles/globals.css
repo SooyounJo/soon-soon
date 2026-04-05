@@ -101,6 +101,13 @@ html.page-who-mcp-root #__next {
   color: rgba(255, 255, 255, 0.88);
 }
 
+.page-who-mcp__back--solo {
+  position: fixed;
+  top: clamp(10px, 2vw, 14px);
+  left: clamp(14px, 3vw, 22px);
+  z-index: 10;
+}
+
 .page-who-mcp__open {
   opacity: 0.82;
 }
@@ -119,7 +126,7 @@ html.page-who-mcp-root #__next {
 .who-mcp {
   position: relative;
   width: 100%;
-  min-height: 2200px;
+  min-height: 100dvh;
   background: #000;
 }
 
@@ -294,7 +301,7 @@ html.page-who-mcp-root #__next {
 .who-mcp__bottom {
   position: relative;
   margin-top: clamp(26px, 4vw, 44px);
-  min-height: 980px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -2247,15 +2254,11 @@ html.page-who-figma-root body {
 .page-who-figma__scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  /* 바깥 스크롤을 없애고, iframe(피그마 임베드)이 자체 스크롤을 담당 */
+  overflow: hidden;
 }
 
 .page-who-figma__scroll::-webkit-scrollbar {
-  display: none;
   width: 0;
   height: 0;
 }
@@ -2263,9 +2266,8 @@ html.page-who-figma-root body {
 .page-who-figma__iframe {
   display: block;
   width: 100%;
-  /* 긴 이력 프레임 — 바깥 스크롤(스크롤바 숨김)로 탐색 */
-  min-height: clamp(2000px, 300vh, 5200px);
-  height: clamp(2000px, 300vh, 5200px);
+  height: 100%;
+  min-height: 0;
   border: 0;
   background: #0a0a0c;
 }
