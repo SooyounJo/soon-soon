@@ -243,6 +243,35 @@ function SubPageTitleScene({ text, strongHover = false }) {
   );
 }
 
+function CanvasStabilizer() {
+  const invalidate = useThree((s) => s.invalidate);
+  const size = useThree((s) => s.size);
+  useEffect(() => {
+    invalidate();
+    const raf = requestAnimationFrame(() => invalidate());
+
+    let cancelled = false;
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) invalidate();
+      });
+    }
+
+    const onPageShow = () => invalidate();
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      window.removeEventListener('pageshow', onPageShow);
+    };
+  }, [invalidate]);
+
+  useEffect(() => {
+    invalidate();
+  }, [invalidate, size.width, size.height]);
+  return null;
+}
+
 /**
  * 서브페이지 3D 타이틀 — 히어로 `view`와 동일 씬 배경(#000)·조명·GlassTransmission·톤매핑.
  * (투명 캔버스는 physical transmission 이 화면 밖을 굴절할 때 회색/무광처럼 보임)
@@ -274,6 +303,7 @@ export default function SubPageTitle3D({ text, strongHover = false }) {
         }}
       >
         <Suspense fallback={null}>
+          <CanvasStabilizer />
           <SubPageTitleScene text={meshText} strongHover={strongHover} />
         </Suspense>
       </Canvas>

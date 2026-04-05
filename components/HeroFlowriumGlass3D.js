@@ -442,16 +442,43 @@ function DemandBootFrames() {
 function RefitBoundsAfterLoad({ mode }) {
   const api = useBounds();
   const invalidate = useThree((s) => s.invalidate);
-  useEffect(() => {
-    const run = () => {
+  const size = useThree((s) => s.size);
+  const runRef = useRef(() => {});
+
+  useLayoutEffect(() => {
+    runRef.current = () => {
       api.refresh();
       api.reset().fit();
       invalidate();
     };
+  }, [api, invalidate]);
+
+  useEffect(() => {
+    const run = () => runRef.current?.();
+
     run();
-    const ids = [120, 280].map((ms) => window.setTimeout(run, ms));
-    return () => ids.forEach((id) => window.clearTimeout(id));
-  }, [api, invalidate, mode]);
+    const ids = [120, 280, 820].map((ms) => window.setTimeout(run, ms));
+
+    let cancelled = false;
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) run();
+      });
+    }
+
+    const onPageShow = () => run();
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('pageshow', onPageShow);
+      ids.forEach((id) => window.clearTimeout(id));
+    };
+  }, [mode]);
+
+  // 캔버스 사이즈가 바뀌는 순간(모바일 주소창/회전/리로드 타이밍)에도 재-fit
+  useEffect(() => {
+    runRef.current?.();
+  }, [size.width, size.height]);
   return null;
 }
 

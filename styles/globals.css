@@ -9,6 +9,14 @@
 @import "shadcn/tailwind.css";
 /* Bagel Fat One: pages/index.js <Head> */
 
+@font-face {
+  font-family: 'Orbit';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/Orbit-Regular.woff2') format('woff2');
+}
+
 *,
 *::before,
 *::after {
@@ -79,7 +87,7 @@ html.page-who-mcp-root #__next {
   min-height: 100dvh;
   background: #050508;
   color: rgba(247, 251, 255, 0.95);
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
 }
 
 .page-who-mcp__bar {
@@ -412,7 +420,7 @@ html.flowrium-home body {
 }
 
 body {
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   background: #000000;
   color: #ffffff;
 }
@@ -796,7 +804,7 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
 
 .flowrium-scroll-capsule-cursor span {
   display: block;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   font-size: 22px;
   font-weight: 200;
   font-variation-settings: 'wght' 200;
@@ -998,7 +1006,7 @@ html.flowrium-video-tbc-active body {
 }
 
 .flowrium-video-tbc-cursor__label {
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   font-size: clamp(14px, 1.8vw, 20px);
   font-weight: 200;
   font-variation-settings: 'wght' 200;
@@ -1009,6 +1017,7 @@ html.flowrium-video-tbc-active body {
 
 :root {
   --flowrium-mint-bg: #000000;
+  --flowrium-font-sans: 'Orbit', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 main.page-landing.page-landing--mint {
@@ -1065,7 +1074,7 @@ main.page-landing.page-landing--scroll-gravity {
 }
 
 .landing-glass-dock--visible {
-  bottom: 0;
+  bottom: clamp(12px, 2vh, 26px);
   pointer-events: auto;
   visibility: visible;
   transition:
@@ -1173,7 +1182,7 @@ main.page-landing.page-landing--scroll-gravity {
   --landing-dock-rot: -16deg;
   --landing-dock-ox: 18%;
   --landing-dock-oy: 86%;
-  --landing-dock-tx: -32px;
+  --landing-dock-tx: -14px;
   --landing-dock-ty: 18px;
 }
 
@@ -1189,7 +1198,7 @@ main.page-landing.page-landing--scroll-gravity {
   --landing-dock-rot: -10.5deg;
   --landing-dock-ox: 26%;
   --landing-dock-oy: 36%;
-  --landing-dock-tx: -40px;
+  --landing-dock-tx: -18px;
   --landing-dock-ty: 14px;
 }
 
@@ -1198,15 +1207,15 @@ main.page-landing.page-landing--scroll-gravity {
   --landing-dock-ox: 58%;
   --landing-dock-oy: 92%;
   --landing-dock-tx: 14px;
-  --landing-dock-ty: 24px;
+  --landing-dock-ty: -30px;
 }
 
 .landing-glass-dock__brick > .landing-glass-dock__btn-wrap:nth-child(5) {
   --landing-dock-rot: -14deg;
   --landing-dock-ox: 88%;
   --landing-dock-oy: 68%;
-  --landing-dock-tx: 34px;
-  --landing-dock-ty: 16px;
+  --landing-dock-tx: 8px;
+  --landing-dock-ty: -34px;
 }
 
 /*
@@ -1233,7 +1242,7 @@ main.page-landing.page-landing--scroll-gravity {
     ),
     rgba(255, 255, 255, 0.1);
   color: rgba(245, 255, 251, 0.95);
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   font-size: clamp(36px, 4.35vw, 46px);
   font-weight: 200;
   font-variation-settings: 'wght' 200;
@@ -1345,7 +1354,7 @@ main.page-landing.page-landing--scroll-gravity {
   box-sizing: border-box;
   padding: clamp(1.25rem, 4vw, 2.75rem);
   color: rgba(247, 251, 255, 0.95);
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   background:
     radial-gradient(120% 80% at 18% 0%, rgba(52, 211, 153, 0.1), transparent 52%),
     radial-gradient(95% 55% at 100% 28%, rgba(59, 130, 246, 0.07), transparent 52%),
@@ -1654,7 +1663,7 @@ main.page-landing.page-landing--scroll-gravity {
 .page-sub__hub-typo-tl,
 .page-sub__hub-typo-br {
   position: absolute;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   font-weight: 200;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -1778,7 +1787,7 @@ main.page-landing.page-landing--scroll-gravity {
     calc(clamp(28px, 4.8vmin, 64px) + env(safe-area-inset-bottom, 0px))
     calc(clamp(36px, 6vmin, 88px) + env(safe-area-inset-left, 0px));
   pointer-events: none;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
   font-size: clamp(14px, 1.75vw, 40px);
   font-weight: 200;
   font-variation-settings: 'wght' 200;
@@ -2219,7 +2228,7 @@ html.page-who-figma-root body {
   box-sizing: border-box;
   background: #050508;
   color: rgba(247, 251, 255, 0.95);
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: var(--flowrium-font-sans);
 }
 
 .page-who-figma__bar {
