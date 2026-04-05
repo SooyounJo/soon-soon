@@ -96,8 +96,12 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion, strongHover = f
       mat.clearcoat = GLASS_BASE.clearcoat + h * 0.12 * hs;
     }
 
+    const t = state.clock.elapsedTime;
+    const a = floatPhase;
+    const floatMul = strongHover ? 1.18 : 1;
+    const bobScale = 1 + Math.sin(t * 0.92 + a * 2.1) * 0.01 * floatMul;
     const scaleBoost = 1 + h * (0.045 + (strongHover ? 0.028 : 0)) * hs;
-    g.scale.setScalar(scaleBoost);
+    g.scale.setScalar(scaleBoost * bobScale);
 
     if (reduceMotion) {
       g.position.set(0, 0, 0);
@@ -110,36 +114,28 @@ function FloatingTitleMesh({ text, font, textSize, reduceMotion, strongHover = f
       }
       return;
     }
-    const t = state.clock.elapsedTime;
-    const e2 = 1;
-    const assemble = 1 - e2;
-    const settle = 1 - e2 * 0.55;
-    const floatDamp = 0.14 + 0.86 * (1 - e2 * 0.92);
-    const breath = 0.11 + 0.89 * e2;
-    const a = floatPhase;
+    // 서브페이지: "그 자리에서 살짝 부유" — 이동/회전량을 작게 고정
+    const ampX = 0.032 * floatMul;
+    const ampY = 0.052 * floatMul;
+    const ampZ = 0.02 * floatMul;
+    const fx = Math.cos(t * 0.75 + a * 2.03) * ampX + Math.cos(t * 0.33 + a * 1.2) * ampX * 0.35;
+    const fy = Math.sin(t * 0.9 + a) * ampY + Math.sin(t * 0.41 + a * 1.7) * ampY * 0.42;
+    const fz = Math.sin(t * 0.6 + a * 0.95) * ampZ;
 
-    const ampY = 0.056;
-    const ampX = 0.026;
-    const ampZ = 0.017;
-    const fy =
-      Math.sin(t * 1.08 + a) * ampY + Math.sin(t * 0.48 + a * 1.7) * ampY * 0.42;
-    const fx = Math.cos(t * 0.85 + a * 2.03) * ampX;
-    const fz = Math.sin(t * 0.62 + a * 0.95) * ampZ;
-
-    const rxIdle = Math.sin(t * 0.88 + a) * 0.055 * breath;
-    const ryIdle = Math.cos(t * 0.66 + a * 1.3) * 0.045 * breath;
-    const rzIdle = Math.sin(t * 0.52 + a * 0.77) * 0.038 * breath;
+    const rxIdle = Math.sin(t * 0.72 + a) * 0.03 * floatMul;
+    const ryIdle = Math.cos(t * 0.58 + a * 1.3) * 0.028 * floatMul;
+    const rzIdle = Math.sin(t * 0.46 + a * 0.77) * 0.022 * floatMul;
 
     const hz = h * (0.06 + (strongHover ? 0.05 : 0)) * hs;
     g.position.set(
-      fx * settle * floatDamp,
-      fy * settle * floatDamp,
-      fz * settle * floatDamp + hz
+      fx,
+      fy,
+      fz + hz
     );
     g.rotation.set(
-      assemble * 0 + rxIdle + h * (0.04 + (strongHover ? 0.035 : 0)) * hs,
-      assemble * 0 + ryIdle - h * (0.035 + (strongHover ? 0.04 : 0)) * hs,
-      assemble * 0 + rzIdle + h * (strongHover ? 0.022 : 0) * hs
+      rxIdle + h * (0.04 + (strongHover ? 0.035 : 0)) * hs,
+      ryIdle - h * (0.035 + (strongHover ? 0.04 : 0)) * hs,
+      rzIdle + h * (strongHover ? 0.022 : 0) * hs
     );
   });
 

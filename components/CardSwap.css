@@ -39,10 +39,11 @@
 }
 
 .card {
+  --card-radius: 12px;
   position: absolute;
   top: 50%;
   left: 50%;
-  border-radius: 12px;
+  border-radius: var(--card-radius);
   border: 1px solid rgba(255, 255, 255, 0.3);
   /* 어두운 단색 대신 미스트: backdrop 실패 시에도 완전 블랙 덩어리로 안 보이게 */
   background:
@@ -93,7 +94,7 @@
 
 /* 이미지 카드 — contain 으로 크롭 없음; 배경은 기본 .card 글래스 유지(블러 살림) */
 .card--media {
-  padding: clamp(0.55rem, 1.6vw, 0.95rem);
+  padding: 40px;
   overflow: hidden;
   justify-content: stretch;
   align-items: stretch;
@@ -107,6 +108,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .card--media .card__img {
@@ -116,6 +119,7 @@
   object-position: center;
   display: block;
   user-select: none;
+  border-radius: inherit;
   /* View site 커서·호버: hit-test 가 img 에 닿아야 함 (클릭은 버블링으로 카드 유지) */
   pointer-events: auto;
 }
@@ -169,6 +173,7 @@
 }
 
 .card-swap-container--multi .card {
+  --card-radius: 18px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.34);
   background:

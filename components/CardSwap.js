@@ -40,7 +40,7 @@ const CardSwap = ({
   height = 400,
   cardDistance = 60,
   verticalDistance = 70,
-  delay = 5000,
+  delay = 3000,
   pauseOnHover = false,
   enableWheel = true,
   onCardClick,
@@ -85,22 +85,56 @@ const CardSwap = ({
   const lastWheelAtRef = useRef(0);
 
   useEffect(() => {
+    // children 개수 변경 시에도 스왑 순서가 동기화되게 리셋
+    order.current = Array.from({ length: refs.length }, (_, i) => i);
+
     const total = refs.length;
     refs.forEach((r, i) => {
       if (!r.current) return;
       placeNow(r.current, makeSlot(i, cardDistance, verticalDistance, total), skewAmount);
     });
 
+    // 뒤로 간 카드는 이벤트를 먹지 않게: "맨 앞 카드만" 인터랙션
+    refs.forEach((r) => {
+      const el = r.current;
+      if (!el) return;
+      el.dataset.flowriumOrigTabindex = el.getAttribute('tabindex') ?? '';
+    });
+    const setInteractivity = (frontIndex) => {
+      for (let i = 0; i < refs.length; i++) {
+        const el = refs[i].current;
+        if (!el) continue;
+        const isFront = i === frontIndex;
+        el.style.pointerEvents = isFront ? 'auto' : 'none';
+        if (isFront) {
+          const orig = el.dataset.flowriumOrigTabindex ?? '';
+          if (orig === '') el.removeAttribute('tabindex');
+          else el.setAttribute('tabindex', orig);
+          el.removeAttribute('aria-hidden');
+        } else {
+          el.setAttribute('tabindex', '-1');
+          el.setAttribute('aria-hidden', 'true');
+        }
+      }
+    };
+    setInteractivity(order.current[0]);
+
     const swap = () => {
       if (order.current.length < 2) return;
+      if (tlRef.current && typeof tlRef.current.isActive === 'function' && tlRef.current.isActive()) {
+        return;
+      }
 
       const [front, ...rest] = order.current;
       const elFront = refs[front].current;
+      if (!elFront) return;
       const tl = gsap.timeline();
       tlRef.current = tl;
+      setInteractivity(-1);
 
+      const dropY = Math.max(500, Math.round(height * 1.15));
       tl.to(elFront, {
-        y: '+=500',
+        y: `+=${dropY}`,
         duration: config.durDrop,
         ease: config.ease,
       });
@@ -146,6 +180,7 @@ const CardSwap = ({
 
       tl.call(() => {
         order.current = [...rest, front];
+        setInteractivity(order.current[0]);
       });
     };
 

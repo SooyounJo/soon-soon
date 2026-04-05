@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import '../styles/mobile-case-figma-mcp.css';
 import '../components/CardSwap.css';
+import '../components/Aurora.css';
 import McpCaseViewCursor from '../components/McpCaseViewCursor';
 import VideoTbcCursor from '../components/VideoTbcCursor';
 import GlassCursorOverlay from '../components/GlassCursorOverlay';

@@ -72,7 +72,9 @@ export default function GlassCursorOverlay() {
         </button>
       ) : (
         <div
-          className={`flowrium-css-cursor-ring${hasPointer ? ' flowrium-css-cursor-ring--visible' : ''}`}
+          className={`flowrium-css-cursor-ring${
+            isHome && !showLandingCapsule ? ' flowrium-css-cursor-ring--view' : ''
+          }${hasPointer ? ' flowrium-css-cursor-ring--visible' : ''}`}
           style={{
             transform: `translate3d(${cursorPos.x}px, ${cursorPos.y}px, 0)`,
           }}

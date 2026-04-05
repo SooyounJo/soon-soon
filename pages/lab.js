@@ -1,8 +1,8 @@
 import SubPageShell from '../components/SubPageShell';
 
-import memorytone from '../assets/lab/memorytone.png';
-import flowrium from '../assets/lab/flowrium.png';
-import newPersona from '../assets/lab/new-persona.png';
+import labCard1 from '../assets/lab/lab-card-1.png';
+import labCard2 from '../assets/lab/lab-card-2.png';
+import labCard3 from '../assets/lab/lab-card-3.png';
 
 /**
  * Lab 카드 이미지 — webpack 번들에 포함되어 public 누락·배포 경로 문제 없이 로드됨.
@@ -11,21 +11,25 @@ import newPersona from '../assets/lab/new-persona.png';
 const CARDS = [
   {
     id: 'lab-memorytone',
-    imageSrc: memorytone.src,
+    imageSrc: labCard1.src,
     imageAlt: 'Memorytone — portable record player',
     href: '/lab/memorytone',
   },
   {
     id: 'lab-flowrium',
-    imageSrc: flowrium.src,
+    imageSrc: labCard2.src,
     imageAlt: 'Flowrium — moss and flowers',
     href: '/lab/flowrium',
   },
   {
     id: 'lab-new-persona',
-    imageSrc: newPersona.src,
+    imageSrc: labCard3.src,
     imageAlt: 'New Persona',
     href: '/lab/new-persona',
+  },
+  {
+    id: 'lab-tbc',
+    continuedOnly: true,
   },
 ];
 

@@ -140,6 +140,8 @@ const BEVEL_THICKNESS = 0.062;
 const BEVEL_SIZE = 0.054;
 const BEVEL_SEGMENTS = 3;
 const CURVE_SEGMENTS = 6;
+/** soon 타이포는 더 말랑하게(베벨 라운딩 강화) */
+const SOON_BEVEL_MULT = 1.55;
 
 /** 페이지·씬·굴절 FBO 공통 블랙 (--flowrium-mint-bg) */
 const SCENE_BG = '#000000';
@@ -506,6 +508,7 @@ function ExtrudedLetter({
   textSize = TEXT_SIZE_SOON,
 }) {
   const { coarse } = useContext(PerfContext);
+  const bevelMult = !coarse && mode === 'soon' ? SOON_BEVEL_MULT : 1;
   const groupRef = useRef(null);
   const basePos = useRef(new THREE.Vector3(...position));
   const scrollFallRef = useContext(ScrollFallContext);
@@ -684,8 +687,8 @@ function ExtrudedLetter({
           lineHeight={1}
           curveSegments={coarse ? 4 : CURVE_SEGMENTS}
           bevelEnabled={!coarse}
-          bevelThickness={coarse ? 0 : BEVEL_THICKNESS * extrudeScale}
-          bevelSize={coarse ? 0 : BEVEL_SIZE * extrudeScale}
+          bevelThickness={coarse ? 0 : BEVEL_THICKNESS * extrudeScale * bevelMult}
+          bevelSize={coarse ? 0 : BEVEL_SIZE * extrudeScale * bevelMult}
           bevelOffset={0}
           bevelSegments={coarse ? 0 : BEVEL_SEGMENTS}
           onPointerOver={(e) => {

@@ -1,19 +1,19 @@
 import SubPageShell from '../components/SubPageShell';
 
 /** 각 카드: 이미지 스택(CardSwap) — 클릭 시 세부 페이지 */
-import naverCover from '../assets/mobile/naver.png';
-import manpaCover from '../assets/mobile/manpa.png';
+import mobileCard1 from '../assets/mobile/mobile-card-1.png';
+import mobileCard2 from '../assets/mobile/mobile-card-2.png';
 
 const CARDS = [
   {
     id: 'm1',
-    imageSrc: naverCover.src,
+    imageSrc: mobileCard1.src,
     imageAlt: 'Naver x Coex — AI Agent web',
     href: '/2d/naver',
   },
   {
     id: 'm2',
-    imageSrc: manpaCover.src,
+    imageSrc: mobileCard2.src,
     imageAlt: 'ManPa — SikJuk',
     href: '/2d/manpa',
   },

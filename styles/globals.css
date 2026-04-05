@@ -833,13 +833,14 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
 
 /** 스크롤 이후: WebGL 대신 경량 링 */
 .flowrium-css-cursor-ring {
+  --flowrium-ring-size: 76px;
   position: fixed;
   top: 0;
   left: 0;
-  width: 76px;
-  height: 76px;
-  margin-left: -38px;
-  margin-top: -38px;
+  width: var(--flowrium-ring-size);
+  height: var(--flowrium-ring-size);
+  margin-left: calc(var(--flowrium-ring-size) * -0.5);
+  margin-top: calc(var(--flowrium-ring-size) * -0.5);
   transform: translate3d(-9999px, -9999px, 0);
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.44);
@@ -859,6 +860,10 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
   transition: opacity 160ms ease;
   pointer-events: none;
   will-change: transform, opacity;
+}
+
+.flowrium-css-cursor-ring--view {
+  --flowrium-ring-size: 96px;
 }
 
 .flowrium-css-cursor-ring--visible {
@@ -885,10 +890,10 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
   display: flex;
   align-items: center;
   gap: 8px;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(3);
   padding: 6px 14px 6px 7px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.44);
+  border: 0.33px solid rgba(255, 255, 255, 0.22);
   background: radial-gradient(
     circle at 28% 22%,
     rgba(255, 255, 255, 0.22),
@@ -896,8 +901,8 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
     rgba(255, 255, 255, 0.03) 100%
   );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -6px 12px rgba(255, 255, 255, 0.04),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -4px 10px rgba(255, 255, 255, 0.03),
     0 12px 28px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(14px) saturate(122%);
   -webkit-backdrop-filter: blur(14px) saturate(122%);
@@ -913,7 +918,7 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.42);
+  border: 0.33px solid rgba(255, 255, 255, 0.22);
   background: radial-gradient(
     circle at 32% 26%,
     rgba(255, 255, 255, 0.28),
@@ -921,7 +926,7 @@ html.flowrium-route-loading .flowrium-video-tbc-cursor {
     rgba(255, 255, 255, 0.03) 100%
   );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.26),
     0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
@@ -1323,6 +1328,9 @@ main.page-landing.page-landing--scroll-gravity {
 
 /* 서브 페이지 — 글래스 카드 스왑(Card Swap 스타일 스택) */
 .page-sub--glass {
+  /* 서브 페이지 공통: 전체 요소를 좌상단으로 살짝 이동 */
+  --sub-shift-x: 44px;
+  --sub-shift-y: 30px;
   position: relative;
   z-index: 0;
   min-height: 100vh;
@@ -1343,9 +1351,10 @@ main.page-landing.page-landing--scroll-gravity {
   z-index: 0;
   left: clamp(0px, 1.5vw, 20px);
   top: clamp(26vh, 34%, 44%);
-  transform: translateY(-50%);
-  width: min(72vw, 980px);
-  height: min(64vh, 720px);
+  transform: translateY(-50%)
+    translate3d(calc(var(--sub-shift-x) * -1), calc(var(--sub-shift-y) * -1), 0);
+  width: min(66vw, 900px);
+  height: min(58vh, 660px);
   pointer-events: auto;
 }
 
@@ -1579,6 +1588,11 @@ main.page-landing.page-landing--scroll-gravity {
   top: clamp(20px, 3.5vh, 48px);
 }
 
+/* Lab — 카드 스택을 더 아래로 (타이포와 간격 확보) */
+.page-sub--lab .page-sub__card-swap-wrap {
+  top: clamp(140px, 14vh, 260px);
+}
+
 /* Hub(Lab/Mobile/Multi) — 동일 템플릿으로 통일 */
 
 .page-sub__card-swap-wrap .card__eyebrow {
@@ -1618,26 +1632,7 @@ main.page-landing.page-landing--scroll-gravity {
 /* Hub(Lab/Mobile/Multi) — 메시·벽돌 배경 + 대형 타이포 레이어 */
 .page-sub--hub,
 .page-sub--multi-two {
-  background:
-    radial-gradient(ellipse 85% 55% at 12% 18%, rgba(196, 181, 253, 0.14), transparent 58%),
-    radial-gradient(ellipse 75% 50% at 88% 78%, rgba(251, 207, 232, 0.12), transparent 52%),
-    radial-gradient(ellipse 65% 45% at 48% 42%, rgba(147, 197, 253, 0.1), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 70% 20%, rgba(167, 243, 208, 0.06), transparent 50%),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.028) 0,
-      rgba(255, 255, 255, 0.028) 1px,
-      transparent 1px,
-      transparent 12px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.022) 0,
-      rgba(255, 255, 255, 0.022) 1px,
-      transparent 1px,
-      transparent 12px
-    ),
-    #08080c;
+  background: #000000;
   overflow-x: hidden;
 }
 
@@ -1664,6 +1659,7 @@ main.page-landing.page-landing--scroll-gravity {
   left: clamp(8px, 3vw, 28px);
   top: clamp(100px, 22vh, 180px);
   font-size: clamp(2.5rem, 14vw, 7rem);
+  transform: translate3d(calc(var(--sub-shift-x) * -1), calc(var(--sub-shift-y) * -1), 0);
 }
 
 .page-sub__hub-typo-br {
@@ -1671,36 +1667,33 @@ main.page-landing.page-landing--scroll-gravity {
   bottom: clamp(120px, 24vh, 220px);
   font-size: clamp(2.2rem, 12vw, 6rem);
   text-align: right;
+  transform: translate3d(calc(var(--sub-shift-x) * -1), calc(var(--sub-shift-y) * -1), 0);
 }
 
 .page-sub__card-swap-wrap--hub,
 .page-sub__card-swap-wrap--multi-two {
-  max-width: min(100%, 600px);
-  height: min(760px, 82vh);
-  margin-top: clamp(1rem, 3vh, 2rem);
-  left: clamp(72px, 11vw, 180px);
-  top: clamp(12px, 2.5vh, 36px);
+  position: fixed;
+  z-index: 12;
+  right: clamp(320px, 26vw, 760px);
+  bottom: clamp(18px, 4.2vh, 72px);
+  left: auto;
+  top: auto;
+  margin: 0;
+  width: max-content;
+  max-width: none;
+  height: max-content;
+  transform: translate3d(calc(var(--sub-shift-x) * -1), calc(var(--sub-shift-y) * -1), 0);
 }
 
 /* Hub: 좌/상단 레이어 제거 + 카드에 집중 */
-.page-sub--hub .page-sub__title-3d-wrap {
-  display: none;
-}
-
-.page-sub--hub .page-sub__back {
-  display: none;
-}
-
 .page-sub--hub .page-sub__hub-typo-tl {
   display: none;
 }
 
 /* Hub 카드 영역은 중앙 정렬 */
 .page-sub--hub .page-sub__card-swap-wrap--hub {
-  left: 0;
-  top: 0;
-  margin-left: auto;
-  margin-right: auto;
+  right: clamp(320px, 26vw, 760px);
+  bottom: clamp(18px, 4.2vh, 72px);
 }
 
 .page-sub--multi-two .page-sub__title-3d-wrap {
@@ -1735,6 +1728,9 @@ main.page-landing.page-landing--scroll-gravity {
 
   .page-sub__card-swap-wrap--hub,
   .page-sub__card-swap-wrap--multi-two {
+    position: relative;
+    right: auto;
+    bottom: auto;
     max-width: min(100%, 520px);
     height: min(700px, 76vh);
     margin-left: auto;

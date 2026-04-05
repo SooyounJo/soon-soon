@@ -11,11 +11,13 @@ export default function SubPageShell({ headTitle, title, cards = [], variant, ch
   const multiTwo = variant === 'multi-two';
   const lab = variant === 'lab';
   const mobile = variant === 'mobile';
-  const hub = multiTwo || lab || mobile;
-  const hubCardDelay = hub ? 1000 : 5000;
+  // Hub 스타일(좌측 3D 타이포 숨김)은 mobile/multi-two만 적용
+  const hub = multiTwo || mobile;
+  const showHubTypo = multiTwo || lab || mobile;
+  const hubCardDelay = 3000;
   const hubPauseOnHover = hub ? false : false;
 
-  const hubTypo = hub
+  const hubTypo = showHubTypo
     ? {
         tl: multiTwo ? 'Scene' : lab ? 'Lab' : 'Mobile',
         br: multiTwo ? 'Device' : lab ? 'Case' : 'UI',
@@ -29,7 +31,7 @@ export default function SubPageShell({ headTitle, title, cards = [], variant, ch
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <main
-        className={`page-sub page-sub--glass${hub ? ' page-sub--hub' : ''}${multiTwo ? ' page-sub--multi-two' : ''}`}
+        className={`page-sub page-sub--glass${hub ? ' page-sub--hub' : ''}${lab ? ' page-sub--lab' : ''}${multiTwo ? ' page-sub--multi-two' : ''}`}
       >
         {hubTypo ? (
           <div className="page-sub__hub-typo" aria-hidden>
@@ -59,13 +61,13 @@ export default function SubPageShell({ headTitle, title, cards = [], variant, ch
                   ? 'card-swap-container--flowrium card-swap-container--multi'
                   : 'card-swap-container--flowrium'
               }
-              width={multiTwo ? 540 : lab ? 560 : 620}
-              height={multiTwo ? 620 : lab ? 640 : 640}
-              cardDistance={multiTwo ? 76 : lab ? 62 : 68}
-              verticalDistance={multiTwo ? 88 : lab ? 74 : 78}
+              width={multiTwo ? 400 : lab ? 380 : mobile ? 400 : 440}
+              height={multiTwo ? 480 : lab ? 460 : mobile ? 480 : 500}
+              cardDistance={multiTwo ? 54 : lab ? 44 : mobile ? 48 : 50}
+              verticalDistance={multiTwo ? 66 : lab ? 54 : mobile ? 58 : 60}
               delay={hubCardDelay}
               pauseOnHover={hubPauseOnHover}
-              enableWheel={!hub}
+              enableWheel
               skewAmount={multiTwo ? 14 : 6}
             >
               {cards.map((c) => (
